@@ -1,0 +1,30 @@
+[project]
+name = "astrology-agent"
+version = "0.1.0"
+description = "Multi-user conversational astrology platform with real-time SSE streaming and SVG chart rendering"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.5.0",
+    "asyncpg>=0.30.0",
+    "pyjwt>=2.9.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-multipart>=0.0.12",
+    "redis[hiredis]>=5.2.0",
+    "pyswisseph>=2.10.03.1",
+    "httpx>=0.28.0",
+    "orjson>=3.10.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

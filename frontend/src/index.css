@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ─────────────────────────────────────────────── */
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-gray-950 text-gray-100 antialiased;
+    min-height: 100dvh;
+  }
+
+  #root {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Custom scrollbar for dark theme */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-700 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-600;
+  }
+}
+
+/* ── Components ───────────────────────────────────────── */
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg
+           bg-accent hover:bg-accent-dark text-white font-medium
+           transition-colors duration-150 focus:outline-none focus:ring-2
+           focus:ring-accent/50 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center px-3 py-1.5 rounded-lg
+           text-gray-300 hover:text-white hover:bg-surface-light
+           transition-colors duration-150 focus:outline-none focus:ring-2
+           focus:ring-accent/30;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 rounded-lg bg-surface-light border border-gray-700
+           text-gray-100 placeholder-gray-500
+           focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/50
+           transition-colors duration-150;
+  }
+
+  .card {
+    @apply rounded-xl bg-surface border border-gray-800 shadow-lg;
+  }
+
+  .chip {
+    @apply px-3 py-1.5 rounded-full text-sm font-medium
+           bg-surface-light text-gray-300 hover:text-white hover:bg-gray-700
+           transition-colors duration-150 cursor-pointer
+           border border-gray-700/50;
+  }
+}
+
+/* ── Utilities ────────────────────────────────────────── */
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* ── Astrological Glyph Font Placeholder ──────────────── */
+
+@font-face {
+  font-family: 'AstroGlyphs';
+  src: url('/fonts/astro-glyphs.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
