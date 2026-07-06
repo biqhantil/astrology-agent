@@ -4,21 +4,18 @@ from __future__ import annotations
 
 from typing import AsyncGenerator
 
-from asyncpg import Connection
-
-from app.database import db
+from app.database import ConnectionWrapper, db
 
 
-async def get_conn() -> AsyncGenerator[Connection, None]:
-    """Yield a database connection from the pool.
+async def get_conn():
+    """Yield a connection wrapper for the current request.
 
     Usage::
 
         @router.get("/items")
-        async def list_items(conn: Connection = Depends(get_conn)):
+        async def list_items(conn = Depends(get_conn)):
             ...
     """
-    if db._pool is None:
-        raise RuntimeError("Database pool is not connected — did the app start correctly?")
-    async with db._pool.acquire() as conn:
-        yield conn
+    if db._conn is None:
+        raise RuntimeError("Database is not connected — did the app start correctly?")
+    yield ConnectionWrapper(db._conn)

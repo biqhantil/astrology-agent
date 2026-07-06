@@ -11,8 +11,6 @@ from datetime import date, datetime
 from typing import Any
 from uuid import UUID
 
-from asyncpg import Connection
-
 from app.astro_engine import compute_chart
 from app.astro_engine.life_phases import compute_life_phases
 from app.astro_engine.synastry import compute_synastry
@@ -128,7 +126,7 @@ def _register(name: str):
 async def execute_tool(
     tool_name: str,
     arguments: dict[str, Any],
-    conn: Connection,
+    conn,
     user_id: UUID,
 ) -> dict[str, Any]:
     """Execute a tool by name and return the result.
@@ -170,7 +168,7 @@ async def execute_tool(
 @_register("render_natal_chart")
 async def _execute_render_natal_chart(
     args: dict[str, Any],
-    conn: Connection,
+    conn,
     user_id: UUID,
 ) -> dict[str, Any]:
     """Compute the natal chart for the given user and return structured data."""
@@ -267,7 +265,7 @@ async def _execute_render_natal_chart(
 @_register("render_transit_timeline")
 async def _execute_render_transit_timeline(
     args: dict[str, Any],
-    conn: Connection,
+    conn,
     user_id: UUID,
 ) -> dict[str, Any]:
     """Compute transits against a natal chart for a date range."""
@@ -367,7 +365,7 @@ async def _execute_render_transit_timeline(
 @_register("render_synastry")
 async def _execute_render_synastry(
     args: dict[str, Any],
-    conn: Connection,
+    conn,
     user_id: UUID,
 ) -> dict[str, Any]:
     """Compute synastry (relationship compatibility) between two charts."""
@@ -456,7 +454,7 @@ async def _execute_render_synastry(
 @_register("render_life_phases")
 async def _execute_render_life_phases(
     args: dict[str, Any],
-    conn: Connection,
+    conn,
     user_id: UUID,
 ) -> dict[str, Any]:
     """Compute life phase milestones for a user from their birth data."""

@@ -14,7 +14,6 @@ from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
-from asyncpg import Connection
 from httpx import ASGITransport, AsyncClient
 
 from app.main import app
@@ -33,14 +32,14 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
 
 @pytest_asyncio.fixture
 async def mock_conn() -> AsyncMock:
-    """Return an ``AsyncMock`` standing in for an ``asyncpg.Connection``.
+    """Return an ``AsyncMock`` standing in for a database connection.
 
     Assign return values in tests::
 
         mock_conn.fetchrow.return_value = {"id": "…", "email": None, …}
         mock_conn.fetchval.return_value = some_uuid
     """
-    return AsyncMock(spec=Connection)
+    return AsyncMock()
 
 
 @pytest.fixture

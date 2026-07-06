@@ -24,21 +24,8 @@ class Settings(BaseSettings):
     PORT: int = 8000
     CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
 
-    # ── PostgreSQL ───────────────────────────────────────────────
-    POSTGRES_HOST: str = "localhost"
-    POSTGRES_PORT: int = 5432
-    POSTGRES_USER: str = "astrology"
-    POSTGRES_PASSWORD: str = "astrology_dev"
-    POSTGRES_DB: str = "astrology_agent"
-    POSTGRES_MIN_CONNECTIONS: int = 2
-    POSTGRES_MAX_CONNECTIONS: int = 20
-
-    @property
-    def database_url(self) -> str:
-        return (
-            f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-        )
+    # ── SQLite ──────────────────────────────────────────────────
+    SQLITE_PATH: str = "data/astrology.db"
 
     # ── Redis ────────────────────────────────────────────────────
     REDIS_HOST: str = "localhost"

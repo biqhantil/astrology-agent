@@ -16,7 +16,7 @@ from app.routers import auth, birth_profiles, charts, conversations, life_phases
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
-    """Startup: connect to Postgres + Redis. Shutdown: close connections."""
+    """Startup: connect to SQLite. Shutdown: close the database connection."""
     # Startup
     await db.connect()
     yield

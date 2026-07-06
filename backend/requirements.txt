@@ -5,7 +5,7 @@ pydantic>=2.9.0
 pydantic-settings>=2.5.0
 
 # Database
-asyncpg>=0.30.0
+aiosqlite>=0.20.0
 
 # Auth & Security
 pyjwt>=2.9.0
