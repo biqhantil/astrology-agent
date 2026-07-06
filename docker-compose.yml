@@ -1,76 +1,44 @@
-# ── Astrology Agent — local development environment ───────────────────────────
-# Services: PostgreSQL 15, Redis 7, Backend (FastAPI)
-
-version: "3.9"
-
-x-postgres-env: &postgres-env
-  POSTGRES_USER: astrology
-  POSTGRES_PASSWORD: astrology_dev
-  POSTGRES_DB: astrology_agent
+# ── Astrology Agent — Production Docker Compose ─────────────────────────────
+# Two services: FastAPI backend + nginx (reverse proxy + static frontend + auth)
 
 services:
 
-  # ── PostgreSQL ──────────────────────────────────────────────────────────────
-  postgres:
-    image: postgres:15-alpine
-    container_name: astrology-postgres
-    environment:
-      <<: *postgres-env
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./backend/migrations:/docker-entrypoint-initdb.d/migrations
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U astrology -d astrology_agent"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
-
-  # ── Redis ───────────────────────────────────────────────────────────────────
-  redis:
-    image: redis:7-alpine
-    container_name: astrology-redis
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-
-  # ── Backend (FastAPI) ───────────────────────────────────────────────────────
+  # ── Backend (FastAPI + uvicorn) ───────────────────────────────
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: astrology-backend
+    restart: unless-stopped
+    env_file: .env
     environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: astrology
-      POSTGRES_PASSWORD: astrology_dev
-      POSTGRES_DB: astrology_agent
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      JWT_SECRET_KEY: dev-secret-key-change-in-production
-      DEBUG: "true"
-    ports:
-      - "8000:8000"
+      OPENCODE_API_KEY: ${OPENCODE_API_KEY}
+      SQLITE_PATH: /data/astrology.db
     volumes:
-      - ./backend:/app
+      - astro_data:/data
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/v1/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+
+  # ── nginx (reverse proxy + static files) ──────────────────────
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      NGINX_SERVER_NAME: ${NGINX_SERVER_NAME:-localhost}
+      BASIC_AUTH_USER: ${BASIC_AUTH_USER:-bix}
+      BASIC_AUTH_PASS: ${BASIC_AUTH_PASS:-changeme}
     depends_on:
-      postgres:
+      backend:
         condition: service_healthy
-      redis:
-        condition: service_healthy
-    command: >
-      sh -c "
-        python run_migrations.py &&
-        python seed.py &&
-        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-      "
 
 volumes:
-  pgdata:
+  astro_data:

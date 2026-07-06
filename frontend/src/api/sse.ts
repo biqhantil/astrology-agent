@@ -62,7 +62,7 @@ export function connectSSE(
             const event = {
               type: eventType as SSEEventPayload['type'],
               data: parsed,
-            } as SSEEventPayload;
+            } as unknown as SSEEventPayload;
 
             onEvent(event);
           } catch (err) {
