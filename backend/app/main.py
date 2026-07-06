@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import db
-from app.routers import auth, birth_profiles, charts, life_phases, me, synastry, transits
+from app.routers import auth, birth_profiles, charts, conversations, life_phases, me, messages, stream, synastry, transits
 
 # ── Lifespan ─────────────────────────────────────────────────────
 
@@ -72,7 +72,7 @@ app.include_router(transits.router, prefix="/v1/charts", tags=["transits"])
 app.include_router(charts.router, prefix="/v1/charts", tags=["charts"])
 app.include_router(life_phases.router, prefix="/v1", tags=["life-phases"])
 
-# Remaining routers wired in later chunks:
-# from app.routers import conversations, stream
-# app.include_router(conversations.router, prefix="/v1/conversations", tags=["conversations"])
-# app.include_router(stream.router, prefix="/v1/stream", tags=["stream"])
+app.include_router(conversations.router, prefix="/v1/conversations", tags=["conversations"])
+app.include_router(messages.router, prefix="/v1/conversations", tags=["messages"])
+
+app.include_router(stream.router, prefix="/v1", tags=["stream"])

@@ -60,5 +60,8 @@ class Settings(BaseSettings):
     RATE_LIMIT_CHART_CALCS: int = 20
     RATE_LIMIT_WINDOW_SECONDS: int = 3600  # 1 hour
 
+    # ── LLM / OpenCode Go API ────────────────────────────────────
+    OPENCODE_API_KEY: str = ""
+
 
 settings = Settings()
