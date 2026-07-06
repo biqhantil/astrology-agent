@@ -171,18 +171,28 @@ class TestUpdateBirthProfile:
         body = resp.json()
         assert body["location_name"] == "Brooklyn, NY"
 
-    async def test_404_when_no_profile(
+    async def test_upsert_when_no_profile(
         self, override_get_conn, mock_conn: AsyncMock, client: AsyncClient
     ):
+        """PUT upserts: if no profile exists, one is created."""
+        from datetime import date
+
         user_id = uuid4()
-        mock_conn.fetchrow.return_value = None
+        profile_id = uuid4()
+        row = dict(_PROFILE_ROW, id=profile_id, user_id=user_id,
+                   birth_date=date(1990, 6, 15),
+                   birth_time=None,
+                   location_name="Nowhere")
+        mock_conn.fetchrow.return_value = row
 
         resp = await client.put(
             "/v1/me/profile",
             json={"location_name": "Nowhere"},
             headers=_auth_header(user_id),
         )
-        assert resp.status_code == 404
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["location_name"] == "Nowhere"
 
     async def test_noop_when_no_fields(
         self, override_get_conn, mock_conn: AsyncMock, client: AsyncClient

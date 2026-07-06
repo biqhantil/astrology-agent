@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import AsyncGenerator
 
-from app.database import ConnectionWrapper, db
+from app.database import db
 
 
 async def get_conn():
-    """Yield a connection wrapper for the current request.
+    """Yield the DatabasePool singleton for the current request.
 
     Usage::
 
@@ -18,4 +18,4 @@ async def get_conn():
     """
     if db._conn is None:
         raise RuntimeError("Database is not connected — did the app start correctly?")
-    yield ConnectionWrapper(db._conn)
+    yield db

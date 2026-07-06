@@ -222,7 +222,7 @@ class DatabasePool:
         if db_dir:
             os.makedirs(db_dir, exist_ok=True)
 
-        self._conn = await aiosqlite.connect(self._db_path)
+        self._conn = await aiosqlite.connect(self._db_path, isolation_level=None)
         self._conn.row_factory = aiosqlite.Row
 
         # Performance & safety pragmas
@@ -326,6 +326,9 @@ class DatabasePool:
     async def transaction(self) -> AsyncGenerator["ConnectionWrapper", None]:
         """Provide a transactional scope.
 
+        Uses SAVEPOINT so it works both inside and outside an existing
+        transaction (SQLite limitation: only one BEGIN allowed at a time).
+
         Yields a ``ConnectionWrapper`` that does **not** auto-commit.
         The context manager commits on success, rolls back on exception.
 
@@ -337,13 +340,22 @@ class DatabasePool:
         """
         if self._conn is None:
             raise RuntimeError("Database is not connected")
-        await self._conn.execute("BEGIN")
+        cw = ConnectionWrapper(self._conn, autocommit=False)
+        await self._conn.execute("SAVEPOINT sp")
+        body_exc: BaseException | None = None
         try:
-            yield ConnectionWrapper(self._conn, autocommit=False)
-            await self._conn.commit()
+            yield cw
+        except Exception as exc:
+            body_exc = exc
+        try:
+            if body_exc is None:
+                await self._conn.execute("RELEASE sp")
+            else:
+                await self._conn.execute("ROLLBACK TO sp")
         except Exception:
-            await self._conn.rollback()
-            raise
+            pass  # best-effort cleanup
+        if body_exc is not None:
+            raise body_exc
 
     # ── Health ──────────────────────────────────────────────────
 
@@ -369,6 +381,42 @@ class ConnectionWrapper:
     def __init__(self, conn: aiosqlite.Connection, *, autocommit: bool = True) -> None:
         self._conn = conn
         self._autocommit = autocommit
+        self._in_transaction = False
+
+    # ── Transaction support ────────────────────────────────────
+
+    @asynccontextmanager
+    async def transaction(self) -> AsyncGenerator[None, None]:
+        """Provide a transactional scope.
+
+        Uses SAVEPOINT so it works both inside and outside an existing
+        transaction (SQLite limitation: only one BEGIN allowed at a time).
+
+        While inside the transaction, ``autocommit`` is temporarily
+        disabled for the *same* wrapper, so that subsequent ``execute``
+        calls on ``conn`` (the outer wrapper) do not auto-commit and
+        thus do not destroy the savepoint.
+
+        Usage::
+
+            async with conn.transaction():
+                await conn.execute("INSERT INTO users ...")
+                await conn.execute("INSERT INTO profiles ...")
+        """
+        await self._conn.execute("SAVEPOINT sp")
+        # Save previous autocommit state, disable it for the scope
+        prev_autocommit = self._autocommit
+        self._autocommit = False
+        self._in_transaction = True
+        try:
+            yield
+            await self._conn.execute("RELEASE sp")
+        except Exception:
+            await self._conn.execute("ROLLBACK TO sp")
+            raise
+        finally:
+            self._autocommit = prev_autocommit
+            self._in_transaction = False
 
     async def execute(self, query: str, *args: object) -> str:
         """Execute a write query and return a command tag.

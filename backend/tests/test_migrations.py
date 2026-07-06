@@ -11,35 +11,34 @@ from pathlib import Path
 
 MIGRATIONS_DIR = Path(__file__).resolve().parent.parent / "migrations"
 
+# The current SQLite-compatible migration (replaces 001/002)
+SQLITE_MIGRATION = "003_sqlite.sql"
 
-def test_migration_files_exist() -> None:
-    """Both migration files must be present."""
+
+def test_migration_file_exists() -> None:
+    """The SQLite migration file must be present."""
     files = sorted(os.listdir(MIGRATIONS_DIR))
-    assert "001_core_tables.sql" in files
-    assert "002_remaining_tables.sql" in files
+    assert SQLITE_MIGRATION in files
 
 
 def test_migration_files_not_empty() -> None:
-    """Each migration file must contain meaningful SQL."""
-    for fname in ("001_core_tables.sql", "002_remaining_tables.sql"):
-        content = (MIGRATIONS_DIR / fname).read_text()
-        assert len(content) > 500, f"{fname} is too short"
-        assert "CREATE TABLE" in content, f"{fname} has no CREATE TABLE"
-        assert "COMMENT ON" in content, f"{fname} has no COMMENT ON"
+    """The migration file must contain meaningful SQL."""
+    content = (MIGRATIONS_DIR / SQLITE_MIGRATION).read_text()
+    assert len(content) > 500, f"{SQLITE_MIGRATION} is too short"
+    assert "CREATE TABLE" in content, f"{SQLITE_MIGRATION} has no CREATE TABLE"
 
 
 def test_all_12_tables_present() -> None:
-    """Collectively the two migrations must define all 12 tables."""
+    """003_sqlite.sql must define all 12 tables."""
     tables_seen = set()
-    for fname in ("001_core_tables.sql", "002_remaining_tables.sql"):
-        content = (MIGRATIONS_DIR / fname).read_text()
-        for line in content.splitlines():
-            line = line.strip()
-            if line.upper().startswith("CREATE TABLE IF NOT EXISTS"):
-                # Extract table name: CREATE TABLE IF NOT EXISTS tablename (
-                parts = line.split()
-                if len(parts) >= 5:
-                    tables_seen.add(parts[4].rstrip("("))
+    content = (MIGRATIONS_DIR / SQLITE_MIGRATION).read_text()
+    for line in content.splitlines():
+        line = line.strip()
+        if line.upper().startswith("CREATE TABLE IF NOT EXISTS"):
+            # Line format: CREATE TABLE IF NOT EXISTS tablename (
+            parts = line.split()
+            if len(parts) >= 6:
+                tables_seen.add(parts[5].rstrip("("))
 
     expected_tables = {
         "users",
