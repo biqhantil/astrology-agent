@@ -58,6 +58,27 @@ def _should_convert_uuid(col_name: str, value: str) -> bool:
     return False
 
 
+# ── Date/time detection helpers ─────────────────────────────────
+
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_DATETIME_RE = re.compile(
+    r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}"
+)
+_TIME_RE = re.compile(r"^\d{2}:\d{2}:\d{2}")
+
+
+def _looks_like_date(s: str) -> bool:
+    return bool(_DATE_RE.match(s))
+
+
+def _looks_like_datetime(s: str) -> bool:
+    return bool(_DATETIME_RE.match(s))
+
+
+def _looks_like_time(s: str) -> bool:
+    return bool(_TIME_RE.match(s))
+
+
 # ── Row class ───────────────────────────────────────────────────
 
 class Row:
@@ -82,6 +103,21 @@ class Row:
                     parsed[k] = v
             elif isinstance(v, str) and _should_convert_uuid(k, v):
                 parsed[k] = uuid.UUID(v)
+            elif isinstance(v, str) and _looks_like_date(v):
+                try:
+                    parsed[k] = date.fromisoformat(v)
+                except ValueError:
+                    parsed[k] = v
+            elif isinstance(v, str) and _looks_like_datetime(v):
+                try:
+                    parsed[k] = datetime.fromisoformat(v)
+                except ValueError:
+                    parsed[k] = v
+            elif isinstance(v, str) and _looks_like_time(v):
+                try:
+                    parsed[k] = time.fromisoformat(v)
+                except ValueError:
+                    parsed[k] = v
             else:
                 parsed[k] = v
         object.__setattr__(self, "_data", parsed)

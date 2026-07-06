@@ -14,7 +14,7 @@ import httpx
 
 # ── Constants ───────────────────────────────────────────────────
 
-OPENCODE_API_BASE = "https://api.opencode.go/v1"
+OPENCODE_API_BASE = "https://opencode.ai/zen/go/v1"
 OPENCODE_MODEL = "deepseek-v4-flash"
 DEFAULT_MAX_TOKENS = 4096
 DEFAULT_TIMEOUT = 120.0
