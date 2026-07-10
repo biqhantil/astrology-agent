@@ -23,8 +23,12 @@ CREATE TABLE IF NOT EXISTS users (
     email           TEXT            NULL        UNIQUE,
     display_name    TEXT            NULL,
     locale          TEXT            NOT NULL    DEFAULT 'en',
+    auth_provider   TEXT            NOT NULL    DEFAULT 'anonymous',
+    google_sub      TEXT            NULL        UNIQUE,
     created_at      TEXT            NOT NULL    DEFAULT (now()),
-    last_active_at  TEXT            NOT NULL    DEFAULT (now())
+    last_active_at  TEXT            NOT NULL    DEFAULT (now()),
+
+    CHECK (auth_provider IN ('anonymous', 'google', 'dev'))
 );
 
 -- ============================================================================

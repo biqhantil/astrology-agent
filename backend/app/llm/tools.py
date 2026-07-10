@@ -26,7 +26,11 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
         "type": "function",
         "function": {
             "name": "render_natal_chart",
-            "description": "Compute and display the user's natal (birth) chart — planet positions, houses, and aspects. Use when the user asks about their birth chart, self-understanding, or general astrological profile.",
+            "description": (
+                "Compute the user's natal (birth) chart — planet positions, houses, and aspects. "
+                "ONLY call this when natal placements are NOT already in the system prompt / "
+                "Current Chart Context. Skip if chart data is already injected."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -43,13 +47,17 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
         "type": "function",
         "function": {
             "name": "render_transit_timeline",
-            "description": "Compute current or upcoming transits against the user's natal chart for a given date range. Use for time-specific astrological forecasts and 'what's happening now' queries.",
+            "description": (
+                "Compute current or upcoming transits against the user's natal chart for a date range. "
+                "Use for today/week/month forecasts. chart_id is optional (defaults to user's natal). "
+                "Prefer a tight window (1–30 days) unless the user asks for longer."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "chart_id": {
                         "type": "string",
-                        "description": "UUID of the natal chart to compare transits against",
+                        "description": "UUID of the natal chart (optional — defaults to user's natal)",
                     },
                     "start_date": {
                         "type": "string",
@@ -60,7 +68,7 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
                         "description": "End date for the transit window (YYYY-MM-DD format, e.g. 2026-08-06)",
                     },
                 },
-                "required": ["chart_id", "start_date", "end_date"],
+                "required": ["start_date", "end_date"],
                 "additionalProperties": False,
             },
         },
@@ -91,7 +99,12 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
         "type": "function",
         "function": {
             "name": "render_life_phases",
-            "description": "Compute major life phase milestones (Saturn returns, Uranus opposition, Chiron return, Expansion, Legacy) from the user's natal chart. Use for life-path questions, timing guidance, and 'what phase am I in' queries.",
+            "description": (
+                "Compute major life phase milestones (Saturn returns, Uranus opposition, "
+                "Chiron return, Expansion, Legacy). ONLY use when the user asks about life "
+                "phase, Saturn return, or life-timing eras — NOT for general natal overview, "
+                "Moon, career, or daily forecasts."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -174,13 +187,12 @@ async def _execute_render_natal_chart(
     """Compute the natal chart for the given user and return structured data."""
     target_user_id = UUID(args["user_id"]) if args.get("user_id") else user_id
 
-    # Fetch the user's birth profile (most recent)
+    # Fetch the user's birth profile (1:1 with user)
     profile = await conn.fetchrow(
         """
-        SELECT id, user_id, dob, tob, latitude, longitude, time_zone, location_name
+        SELECT id, user_id, birth_date, birth_time, latitude, longitude, time_zone, location_name
         FROM birth_profiles
         WHERE user_id = $1
-        ORDER BY created_at DESC
         LIMIT 1
         """,
         target_user_id,
@@ -191,13 +203,23 @@ async def _execute_render_natal_chart(
             "error": "birth_profile_not_found",
         }
 
-    # Parse birth datetime
-    dob: date = profile["dob"]
-    tob_raw = profile["tob"]  # time object or None
-    if tob_raw is None:
-        tob = datetime.strptime("12:00:00", "%H:%M:%S").time()
+    # Parse birth datetime (SQLite stores date/time as text)
+    dob_raw = profile["birth_date"]
+    if isinstance(dob_raw, date) and not isinstance(dob_raw, datetime):
+        dob = dob_raw
     else:
+        dob = date.fromisoformat(str(dob_raw)[:10])
+
+    tob_raw = profile["birth_time"]
+    if tob_raw is None or tob_raw == "":
+        tob = datetime.strptime("12:00:00", "%H:%M:%S").time()
+    elif hasattr(tob_raw, "hour"):
         tob = tob_raw
+    else:
+        tstr = str(tob_raw)
+        if len(tstr) == 5:
+            tstr += ":00"
+        tob = datetime.strptime(tstr[:8], "%H:%M:%S").time()
 
     dt_utc = datetime.combine(dob, tob)
 
@@ -269,18 +291,30 @@ async def _execute_render_transit_timeline(
     user_id: UUID,
 ) -> dict[str, Any]:
     """Compute transits against a natal chart for a date range."""
-    chart_id = UUID(args["chart_id"])
-    start_date_str = args["start_date"]
-    end_date_str = args["end_date"]
+    today = date.today()
+    start_date_str = args.get("start_date") or today.isoformat()
+    # Default end: +14 days when not specified (better for "this week/fortnight")
+    if args.get("end_date"):
+        end_date_str = args["end_date"]
+    else:
+        from datetime import timedelta
+
+        end_date_str = (today + timedelta(days=14)).isoformat()
 
     try:
-        start_date = date.fromisoformat(start_date_str)
-        end_date = date.fromisoformat(end_date_str)
+        start_date = date.fromisoformat(str(start_date_str)[:10])
+        end_date = date.fromisoformat(str(end_date_str)[:10])
     except ValueError as exc:
         return {
             "result": f"Invalid date format: {exc}. Please use YYYY-MM-DD format.",
             "error": "invalid_date",
         }
+
+    # Clamp absurd ranges that explode ephemeris work / tokens
+    if (end_date - start_date).days > 90:
+        from datetime import timedelta
+
+        end_date = start_date + timedelta(days=90)
 
     if start_date > end_date:
         return {
@@ -288,19 +322,38 @@ async def _execute_render_transit_timeline(
             "error": "invalid_date_range",
         }
 
-    # Fetch the natal chart row
-    chart_row = await conn.fetchrow(
-        """
-        SELECT id, user_id, latitude, longitude, time_zone, house_system
-        FROM charts WHERE id = $1
-        """,
-        chart_id,
-    )
+    # Resolve natal chart: explicit id, else user's most recent natal chart
+    chart_row = None
+    if args.get("chart_id"):
+        chart_id = UUID(str(args["chart_id"]))
+        chart_row = await conn.fetchrow(
+            """
+            SELECT id, user_id, latitude, longitude, time_zone, house_system
+            FROM charts WHERE id = $1
+            """,
+            chart_id,
+        )
+    if chart_row is None:
+        chart_row = await conn.fetchrow(
+            """
+            SELECT id, user_id, latitude, longitude, time_zone, house_system
+            FROM charts
+            WHERE user_id = $1 AND chart_type = 'natal'
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            user_id,
+        )
     if chart_row is None:
         return {
-            "result": "Natal chart not found. The chart ID may be invalid or the chart has been deleted.",
+            "result": "Natal chart not found. Compute a natal chart first.",
             "error": "chart_not_found",
         }
+    chart_id = chart_row["id"] if not isinstance(chart_row["id"], UUID) else chart_row["id"]
+    try:
+        chart_id = UUID(str(chart_id))
+    except Exception:
+        pass
 
     # Fetch natal bodies
     bodies_rows = await conn.fetch(
@@ -463,10 +516,9 @@ async def _execute_render_life_phases(
     # Fetch the user's birth profile
     profile = await conn.fetchrow(
         """
-        SELECT id, user_id, dob, latitude, longitude, time_zone
+        SELECT id, user_id, birth_date, latitude, longitude, time_zone
         FROM birth_profiles
         WHERE user_id = $1
-        ORDER BY created_at DESC
         LIMIT 1
         """,
         target_user_id,
@@ -497,10 +549,16 @@ async def _execute_render_life_phases(
         if saturn_row:
             saturn_longitude = float(saturn_row["longitude"])
 
+    birth_date_val = profile["birth_date"]
+    if isinstance(birth_date_val, datetime):
+        birth_date_val = birth_date_val.date()
+    elif not isinstance(birth_date_val, date):
+        birth_date_val = date.fromisoformat(str(birth_date_val)[:10])
+
     # Compute life phases
     try:
         phases = compute_life_phases(
-            birth_date=profile["dob"],
+            birth_date=birth_date_val,
             saturn_longitude=saturn_longitude,
             include_descriptions=True,
             include_dominant_transits=True,
@@ -512,8 +570,8 @@ async def _execute_render_life_phases(
         }
 
     return {
-        "result": f"Found {len(phases)} life phases from birth date {profile['dob']}.",
+        "result": f"Found {len(phases)} life phases from birth date {birth_date_val}.",
         "phases": phases,
-        "birth_date": str(profile["dob"]),
+        "birth_date": str(birth_date_val),
         "saturn_longitude": saturn_longitude,
     }

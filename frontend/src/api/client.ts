@@ -74,6 +74,10 @@ export function del<T>(path: string): Promise<T> {
   return request<T>('DELETE', path);
 }
 
+export function patch<T>(path: string, body?: unknown): Promise<T> {
+  return request<T>('PATCH', path, body);
+}
+
 /* ── API-specific helpers ────────────────────────────── */
 
 export function getAuthHeaders(): Record<string, string> {

@@ -1,0 +1,22 @@
+{
+  "step": "u2_natal_deep",
+  "pass": true,
+  "tokens": 21589,
+  "latency_ms": 93809.78857001173,
+  "ux_issues": [
+    "Language mismatch: English user messages, Portuguese replies (confusing for EN users)",
+    "overview called render_life_phases for natal ask \u2014 wrong tool for intent; should use injected chart only",
+    "Very long replies (5\u20136k chars) for follow-ups \u2014 hard to scan on mobile Di\u00e1rio chat",
+    "No progressive disclosure: overview already dense; moon/career re-dump similar length"
+  ],
+  "ux_wins": [
+    "Follow-ups correctly skip tools (rounds=1)",
+    "Strong astro grounding with Moon/career specifics",
+    "Memory across turns works (no re-ask for birth data)"
+  ],
+  "product_actions": [
+    "Harden language match: reply in user message language",
+    "Discourage life_phases unless user asks phase/timing",
+    "Add response length guidance for follow-ups (short when question is narrow)"
+  ]
+}

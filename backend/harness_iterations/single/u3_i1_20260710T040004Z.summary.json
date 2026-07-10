@@ -1,0 +1,87 @@
+{
+  "iteration": 1,
+  "scenarios": 1,
+  "passed": 1,
+  "failed": 0,
+  "total_tokens": 31627,
+  "total_latency_ms": 86098.31662103534,
+  "results": [
+    {
+      "name": "u3_ptbr_recovery",
+      "ok": true,
+      "passed_turns": 4,
+      "total_turns": 4,
+      "tokens": 31627,
+      "latency_ms": 86098.31662103534,
+      "error": null,
+      "turns": [
+        {
+          "id": "greet",
+          "passed": true,
+          "status": 201,
+          "tools": [],
+          "rounds": 1,
+          "prompt_tokens": 2332,
+          "completion_tokens": 300,
+          "total_tokens": 2632,
+          "reasoning_tokens": 105,
+          "latency_ms": 5428.1482310034335,
+          "reply_len": 654,
+          "error": null,
+          "exception": null,
+          "preview": "Olá! 🌞 Tudo bem sim, e você? Espero que sim!\n\nSou seu astrólogo aqui do outro lado da tela — com décadas de estudo dos astros e uma vontade sincera de ajudar você a se entender melhor através do seu mapa. \n\nVejo que já tenho seus dados por "
+        },
+        {
+          "id": "vague",
+          "passed": true,
+          "status": 201,
+          "tools": [
+            "render_transit_timeline"
+          ],
+          "rounds": 2,
+          "prompt_tokens": 9230,
+          "completion_tokens": 2851,
+          "total_tokens": 12081,
+          "reasoning_tokens": 1416,
+          "latency_ms": 38651.4095000166,
+          "reply_len": 1770,
+          "error": null,
+          "exception": null,
+          "preview": "E aqui estão os **trânsitos vibrando agora** — 10 de julho de 2026:\n\n### 🔥 Trânsitos-chave de hoje\n\n- **Mercúrio em trígono com seu Plutão natal** (orbe de 0.09°) — Sua mente está afiadíssima, cortando superficialidades. Ótimo para pesquisa"
+        },
+        {
+          "id": "daily",
+          "passed": true,
+          "status": 201,
+          "tools": [],
+          "rounds": 1,
+          "prompt_tokens": 6186,
+          "completion_tokens": 1395,
+          "total_tokens": 7581,
+          "reasoning_tokens": 446,
+          "latency_ms": 18064.263476000633,
+          "reply_len": 3051,
+          "error": null,
+          "exception": null,
+          "preview": "Claro! Peguei os dados dos trânsitos reais de **hoje, 10 de julho de 2026**, contra seu mapa natal. Vou ser direto e prático.\n\n---\n\n## ☀️ Prognóstico Diário — 10/07/2026\n\n### 🧠 Mente afiada (Mercúrio trígono Plutão natal — orbe 0.09°)\nEsse "
+        },
+        {
+          "id": "pushback",
+          "passed": true,
+          "status": 201,
+          "tools": [],
+          "rounds": 1,
+          "prompt_tokens": 7177,
+          "completion_tokens": 2156,
+          "total_tokens": 9333,
+          "reasoning_tokens": 694,
+          "latency_ms": 23954.495414014673,
+          "reply_len": 4580,
+          "error": null,
+          "exception": null,
+          "preview": "Você tem toda razão — vou cravar os dados reais do seu mapa natal e dos trânsitos. Sem generalização.\n\n---\n\n## 🔴 Trânsitos de HOJE (10/07/2026) no SEU mapa\n\n### 1️⃣ Mercúrio em trânsito ♊ Gêmeos (Casa 11) em trígono com seu **Plutão natal ♏"
+        }
+      ]
+    }
+  ]
+}

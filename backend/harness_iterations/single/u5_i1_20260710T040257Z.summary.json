@@ -1,0 +1,91 @@
+{
+  "iteration": 1,
+  "scenarios": 1,
+  "passed": 1,
+  "failed": 0,
+  "total_tokens": 54447,
+  "total_latency_ms": 100842.22429501824,
+  "results": [
+    {
+      "name": "u5_life_phase_long",
+      "ok": true,
+      "passed_turns": 4,
+      "total_turns": 4,
+      "tokens": 54447,
+      "latency_ms": 100842.22429501824,
+      "error": null,
+      "turns": [
+        {
+          "id": "phase",
+          "passed": true,
+          "status": 201,
+          "tools": [
+            "render_life_phases"
+          ],
+          "rounds": 2,
+          "prompt_tokens": 6008,
+          "completion_tokens": 1330,
+          "total_tokens": 7338,
+          "reasoning_tokens": 656,
+          "latency_ms": 17211.96375999716,
+          "reply_len": 2737,
+          "error": null,
+          "exception": null,
+          "preview": "Here's a clear picture of where you are right now, based on your birth date of **March 21, 1985**.\n\n---\n\n## 🌱 Current Phase: **Expansion & Growth** (2017–2027)\n\nYou're in the **tail end** of this phase — it runs until **March 2027**, so you"
+        },
+        {
+          "id": "emotion",
+          "passed": true,
+          "status": 201,
+          "tools": [
+            "render_transit_timeline"
+          ],
+          "rounds": 2,
+          "prompt_tokens": 10972,
+          "completion_tokens": 2540,
+          "total_tokens": 13512,
+          "reasoning_tokens": 910,
+          "latency_ms": 34489.98612500145,
+          "reply_len": 6454,
+          "error": null,
+          "exception": null,
+          "preview": "This is a rich question — your chart has a **powerful emotional signature** that directly ties into this phase. Let me walk through it.\n\n---\n\n## 🌙 Your Natal Moon: The Emotional Blueprint\n\nYour **Moon in Pisces at 28.96°** — the *anaretic* "
+        },
+        {
+          "id": "year",
+          "passed": true,
+          "status": 201,
+          "tools": [
+            "render_transit_timeline"
+          ],
+          "rounds": 2,
+          "prompt_tokens": 18411,
+          "completion_tokens": 3013,
+          "total_tokens": 21424,
+          "reasoning_tokens": 1684,
+          "latency_ms": 38723.94930801238,
+          "reply_len": 5108,
+          "error": null,
+          "exception": null,
+          "preview": "The transit tool returned the tightest events from today — so I'll layer that with what I know about **planetary motion** and your **phase transition in March 2027** to map out the coming year. Here are the three threads I'd track closely.\n"
+        },
+        {
+          "id": "action",
+          "passed": true,
+          "status": 201,
+          "tools": [],
+          "rounds": 1,
+          "prompt_tokens": 11515,
+          "completion_tokens": 658,
+          "total_tokens": 12173,
+          "reasoning_tokens": 104,
+          "latency_ms": 10416.32510200725,
+          "reply_len": 2381,
+          "error": null,
+          "exception": null,
+          "preview": "Here are three small, concrete practices — one for each major thread — designed for your **Pisces Moon** and **12th-house Taurus North Node**.\n\n---\n\n## 🪨 1. The Saturn-Moon Practice: *The 10-Minute Boundary*\n\n*Why:* Saturn is heading toward"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "step": "u4_tool_chain",
+  "pass": true,
+  "tokens": 33776,
+  "latency_ms": 57275.034898048034,
+  "ux_wins": [
+    "English language lock works after fix (was PT on EN in u2)",
+    "Natal big-three from injected chart, no tool \u2014 fast (~3k tok)",
+    "Transit once; synthesis/memory/edge reuse context",
+    "Memory reply short and scannable (702 chars) \u2014 good product pattern",
+    "Ambiguous \"and love?\" still grounded without recompute"
+  ],
+  "ux_issues": [
+    "Transits still ~9.6k tokens for 14-day window (tool result weight)",
+    "Edge love answer longer than memory \u2014 OK but could offer 3 bullets first"
+  ]
+}

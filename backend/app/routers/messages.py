@@ -22,17 +22,68 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.core.auth import AuthPayload, require_user
 from app.core.deps import get_conn
 from app.core.sse_manager import publish
-from app.llm.client import LLMResponse, chat_completion
-from app.llm.prompts import build_system_prompt
-from app.llm.tools import TOOL_DEFINITIONS, execute_tool
-from app.schemas.message import MessageCreate, MessageListResponse, MessageResponse
+from app.llm import (
+    LLMProviderError,
+    LLMResponse,
+    chat_completion,
+    build_system_prompt,
+    TOOL_DEFINITIONS,
+    execute_tool,
+)
+
+# ── Domain schemas (colocated) ────────────────────────────────────
+from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+# ── Request ─────────────────────────────────────────────────────
+
+class MessageCreate(BaseModel):
+    """Send a new user message in a conversation.
+
+    The ``role`` is always ``"user"`` for client submissions.
+    ``content`` is the visible markdown text of the message.
+    """
+
+    role: str = Field(default="user", pattern="^(system|user|assistant|tool)$")
+    content: str
+
+
+# ── Response ────────────────────────────────────────────────────
+
+class MessageResponse(BaseModel):
+    """A single message returned to the client."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    conversation_id: UUID
+    role: str
+    content: str
+    tool_call_id: str | None = None
+    tool_name: str | None = None
+    payload: dict | None = None
+    created_at: datetime
+
+
+class MessageListResponse(BaseModel):
+    """Paginated list of messages."""
+
+    items: list[MessageResponse]
+    total: int
+    offset: int = 0
+    limit: int = 50
+
+# ── Routes ──────────────────────────────────────────────────────────
 
 router = APIRouter()
 
 # How many previous messages to include as context (to keep prompt within budget)
 _HISTORY_LIMIT = 50
 # Maximum rounds of tool calling before we force a text response
-_MAX_TOOL_ROUNDS = 5
+_MAX_TOOL_ROUNDS = 3
 
 
 # ── Helpers ─────────────────────────────────────────────────────
@@ -47,6 +98,38 @@ def _tool_to_chart_event(tool_name: str) -> str:
         "render_life_phases": "chart.life_phases",
     }
     return mapping.get(tool_name, "chart.render")
+
+
+def _detect_reply_language(text: str) -> str | None:
+    """Heuristic language of a user message: ``en``, ``pt``, or None if unclear."""
+    t = (text or "").lower()
+    if not t.strip():
+        return None
+    pt_markers = (
+        "você", "voce", "olá", "ola", "obrigad", "por favor", "meu mapa",
+        "hoje", "lua", "sol ", "carta", "trânsito", "transito", "me diga",
+        "como está", "como esta", "preciso", "quero", "não", "nao ",
+        "bom dia", "boa tarde", "ajuda",
+    )
+    en_markers = (
+        " what ", "what's", "whats", "how ", "my ", "the ", "please",
+        "today", "moon", "sun ", "chart", "transit", "should ", "would ",
+        "tell me", "i want", "i need", "hello", "hi ", "career", "love",
+    )
+    # pad for boundary matches on short strings
+    padded = f" {t} "
+    pt = sum(1 for m in pt_markers if m in padded or m in t)
+    en = sum(1 for m in en_markers if m in padded)
+    # accented Portuguese characters are a strong signal
+    if any(ch in t for ch in "áàâãéêíóôõúç"):
+        pt += 2
+    if pt == 0 and en == 0:
+        return None
+    if pt > en:
+        return "pt"
+    if en > pt:
+        return "en"
+    return None
 
 
 async def _conversation_belongs_to_user(
@@ -128,11 +211,22 @@ async def _load_conversation_history(
                 "content": content or "",
             })
         elif role == "assistant" and row.get("payload") and "tool_calls" in row["payload"]:
-            # Assistant message with tool_calls
+            # Assistant message with tool_calls — ensure args are JSON strings for the API
+            tcs = []
+            for tc in row["payload"]["tool_calls"]:
+                tc = dict(tc)
+                fn = dict(tc.get("function") or {})
+                args = fn.get("arguments")
+                if isinstance(args, dict):
+                    fn["arguments"] = json.dumps(args)
+                elif not isinstance(args, str):
+                    fn["arguments"] = "{}"
+                tc["function"] = fn
+                tcs.append(tc)
             messages.append({
                 "role": "assistant",
                 "content": content,
-                "tool_calls": row["payload"]["tool_calls"],
+                "tool_calls": tcs,
             })
         else:
             messages.append({
@@ -205,7 +299,8 @@ async def _call_llm_with_tools(
     conn,
     user_id: UUID,
     conversation_id: UUID,
-) -> tuple[str | None, list[dict]]:
+    tools: list | None = None,
+) -> tuple[str | None, list[dict], dict]:
     """Run the LLM loop: text → tool_calls → text.
 
     Parameters
@@ -221,24 +316,39 @@ async def _call_llm_with_tools(
         The authenticated user's ID.
     conversation_id : UUID
         The conversation UUID (for SSE publishing).
+    tools : list or None
+        Tool definitions to expose (defaults to full TOOL_DEFINITIONS).
 
     Returns
     -------
-    (final_content, all_messages)
-        ``final_content`` is the last assistant text response, or ``None`` if
-        all rounds resulted in tool calls only.
-        ``all_messages`` is the list of all message dicts that were created
-        during the call (for DB storage and SSE publishing).
+    (final_content, all_messages, usage_totals)
     """
     final_content: str | None = None
     all_created: list[dict] = []
     tool_round = 0
+    active_tools = tools if tools is not None else TOOL_DEFINITIONS
+    usage_totals: dict[str, int] = {
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "reasoning_tokens": 0,
+        "llm_rounds": 0,
+    }
 
     while tool_round < _MAX_TOOL_ROUNDS:
         response: LLMResponse = await chat_completion(
             messages=messages,
             system_prompt=system_prompt,
-            tools=TOOL_DEFINITIONS,
+            tools=active_tools,
+        )
+        usage_totals["llm_rounds"] += 1
+        u = response.usage or {}
+        usage_totals["prompt_tokens"] += int(u.get("prompt_tokens") or 0)
+        usage_totals["completion_tokens"] += int(u.get("completion_tokens") or 0)
+        usage_totals["total_tokens"] += int(u.get("total_tokens") or 0)
+        ctd = u.get("completion_tokens_details") or {}
+        usage_totals["reasoning_tokens"] += int(
+            ctd.get("reasoning_tokens") or u.get("reasoning_tokens") or 0
         )
 
         # Append assistant message
@@ -265,7 +375,20 @@ async def _call_llm_with_tools(
         # Execute each tool call
         for tc in response.tool_calls:
             tool_name = tc["function"]["name"]
-            tool_args = tc["function"]["arguments"]
+            raw_args = tc["function"].get("arguments")
+            # API requires string args in history; parse a copy for execution
+            if isinstance(raw_args, str):
+                try:
+                    tool_args = json.loads(raw_args) if raw_args.strip() else {}
+                except (json.JSONDecodeError, TypeError):
+                    tool_args = {}
+            elif isinstance(raw_args, dict):
+                tool_args = raw_args
+                # Normalize for next LLM round (provider rejects dict args)
+                tc["function"]["arguments"] = json.dumps(raw_args)
+            else:
+                tool_args = {}
+                tc["function"]["arguments"] = "{}"
 
             try:
                 result = await execute_tool(tool_name, tool_args, conn, user_id)
@@ -282,6 +405,10 @@ async def _call_llm_with_tools(
                 "content": tool_result_content,
             }
             messages.append(tool_msg)
+
+            # Ensure assistant tool_calls entry keeps string arguments
+            if isinstance(tc.get("function", {}).get("arguments"), dict):
+                tc["function"]["arguments"] = json.dumps(tc["function"]["arguments"])
 
             # Publish tool result to SSE as a chart.* event
             chart_event = _tool_to_chart_event(tool_name)
@@ -311,7 +438,7 @@ async def _call_llm_with_tools(
                 "trust the process and observe what unfolds in the coming days."
             )
 
-    return final_content, messages
+    return final_content, messages, usage_totals
 
 
 # ── POST /v1/conversations/{conversation_id}/messages ───────────
@@ -367,36 +494,115 @@ async def send_message(
     # 1. Load chart context from the conversation (if any)
     chart_context = await _load_chart_context(conn, conv.get("chart_context_id"))
 
-    # 2. Build the system prompt
-    system_prompt = build_system_prompt(chart_context)
+    # 2. Build the system prompt (include chart_id so transit tools don't need re-natal)
+    chart_id_str = str(conv["chart_context_id"]) if conv.get("chart_context_id") else None
+    system_prompt = build_system_prompt(chart_context, chart_id=chart_id_str)
 
-    # 3. Load recent conversation history
+    # 2b. Language lock from the latest user text (product: never surprise-switch locale)
+    lang = _detect_reply_language(body.content or "")
+    if lang == "pt":
+        system_prompt += (
+            "\n\n## Language lock\n"
+            "The user's latest message is in **Portuguese**. "
+            "You MUST answer entirely in Portuguese (pt-BR)."
+        )
+    elif lang == "en":
+        system_prompt += (
+            "\n\n## Language lock\n"
+            "The user's latest message is in **English**. "
+            "You MUST answer entirely in English."
+        )
+
+    # 3. Tool surface: when natal placements are already injected, hide
+    # render_natal_chart so the model cannot waste a round recomputing them.
+    active_tools = TOOL_DEFINITIONS
+    if chart_context and chart_context.get("bodies"):
+        active_tools = [
+            t
+            for t in TOOL_DEFINITIONS
+            if (t.get("function") or {}).get("name") != "render_natal_chart"
+        ]
+
+    # 4. Load recent conversation history (includes the user message just inserted)
     history = await _load_conversation_history(conn, conversation_id)
 
-    # 4. Append the new user message
-    history.append({
-        "role": "user",
-        "content": body.content,
-    })
-
     # ── Call LLM with tool support ────────────────────────────────
-    assistant_content, _all_messages = await _call_llm_with_tools(
-        messages=history,
-        system_prompt=system_prompt,
-        conn=conn,
-        user_id=user_id,
-        conversation_id=conversation_id,
-    )
+    # New LLM-only rows are appended after this length
+    history_len_before_llm = len(history)
+    usage_totals: dict = {}
+    try:
+        assistant_content, all_messages, usage_totals = await _call_llm_with_tools(
+            messages=history,
+            system_prompt=system_prompt,
+            conn=conn,
+            user_id=user_id,
+            conversation_id=conversation_id,
+            tools=active_tools,
+        )
+    except LLMProviderError as exc:
+        # Surface provider/auth/credit failures as clean API errors (not raw 500)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE
+            if exc.status_code in (401, 402, 403, 429)
+            else status.HTTP_502_BAD_GATEWAY,
+            detail=exc.detail,
+        ) from exc
+    except RuntimeError as exc:
+        # Missing API key, etc.
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
 
     if assistant_content is None:
         assistant_content = "I have processed your request through the celestial lens."
 
-    # ── Insert the assistant message ──────────────────────────────
+    # ── Persist intermediate tool trail (for multi-turn harness inspection) ──
+    # all_messages is the mutated history list; new rows are after history_len_before_llm
+    tools_used: list[str] = []
+    for msg in all_messages[history_len_before_llm:]:
+        role = msg.get("role")
+        if role == "assistant" and msg.get("tool_calls"):
+            await _insert_message(
+                conn,
+                conversation_id,
+                role="assistant",
+                content=msg.get("content"),
+                payload={"tool_calls": msg["tool_calls"]},
+            )
+            for tc in msg["tool_calls"]:
+                name = (tc.get("function") or {}).get("name")
+                if name:
+                    tools_used.append(name)
+        elif role == "tool":
+            # Map tool_call_id → name when possible
+            tname = None
+            for prev in reversed(all_messages[: all_messages.index(msg)]):
+                if prev.get("role") == "assistant" and prev.get("tool_calls"):
+                    for tc in prev["tool_calls"]:
+                        if tc.get("id") == msg.get("tool_call_id"):
+                            tname = (tc.get("function") or {}).get("name")
+                            break
+                if tname:
+                    break
+            if tname:
+                tools_used.append(tname)
+            await _insert_message(
+                conn,
+                conversation_id,
+                role="tool",
+                content=msg.get("content"),
+                tool_call_id=msg.get("tool_call_id"),
+                tool_name=tname,
+            )
+
+    # ── Insert the final assistant text message ───────────────────
     assistant_message = await _insert_message(
         conn,
         conversation_id,
         role="assistant",
         content=assistant_content,
+        payload={"tools_used": tools_used} if tools_used else None,
     )
 
     # ── Bump conversation updated_at ──────────────────────────────
@@ -433,6 +639,8 @@ async def send_message(
     return {
         "user_message": MessageResponse(**user_message),
         "assistant_message": MessageResponse(**assistant_message),
+        "tools_used": list(dict.fromkeys(tools_used)),  # preserve order, unique
+        "usage": usage_totals,
     }
 
 

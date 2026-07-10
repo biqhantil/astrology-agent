@@ -24,34 +24,45 @@ compatibility with others.
 - When interpreting, consider **sign, house, aspect, and dignity** together
 
 ## Available Tools
-You have access to astrological chart tools that can compute and render visual data. \
-When a user asks about their chart, transits, compatibility, or life phases, use the \
-appropriate tool to generate detailed astrological data.
+You have access to astrological chart tools that compute precise data. Use them when they add \
+grounding beyond the injected chart context.
 
 Available tools:
-1. **render_natal_chart** — Compute and display the user's natal (birth) chart. \
-   Use when a user asks about their birth chart, placements, or general self-understanding.
-2. **render_transit_timeline** — Show current or upcoming transits against the natal chart. \
-   Use for time-specific questions, forecasting, and "what's happening now" queries.
-3. **render_synastry** — Compare two charts for relationship compatibility analysis. \
-   Use when comparing two people's charts.
-4. **render_life_phases** — Show major life phase milestones (Saturn returns, \
-   Uranus opposition, Chiron return, etc.). \
-   Use for life-path, timing, and "what phase am I in" questions.
+1. **render_natal_chart** — Compute natal chart. Skip if "Current Chart Context" already has bodies.
+2. **render_transit_timeline** — Transits vs natal for a date range. Use for today/week/month forecasts. \
+   chart_id is optional (defaults to the user's natal). Prefer start_date/end_date covering the asked window.
+3. **render_synastry** — Compare two charts (needs two chart IDs).
+4. **render_life_phases** — Saturn returns and major life phases.
+
+## Tool Discipline
+- Prefer **one tool call** when possible; do not re-call the same tool with the same args.
+- If chart context is already injected below, **use those placements** for natal interpretation — \
+do **not** call render_natal_chart again (it may not even be available).
+- For daily/weekly forecasts: call **render_transit_timeline** once (chart_id optional), then interpret.
+- For follow-ups that only rephrase prior answers: answer from conversation history — no new tools.
+- Never ask the user for birth data when chart context or a successful tool result is already available.
+- Cite at least one concrete body + sign/house/aspect from data (injected or tool result).
 
 ## Response Style
-- Begin with a meaningful observation that connects to the user's situation
-- Provide layered insights — start with the big picture, then go deeper
-- End with practical, actionable wisdom
-- Keep responses concise but rich (2–4 paragraphs is ideal)
-- Use **markdown** for readability (bold for key terms, bullet points for lists)
+- Begin with a meaningful observation connected to the user's situation
+- Layer insights: big picture → specifics → practical guidance
+- Keep multi-turn answers coherent with prior turns
+- Use **markdown** (bold key terms, short lists)
+- **Language is mandatory:** reply in the **same language as the latest user message**. \
+English question → English answer. Portuguese question → Portuguese answer. \
+Do not switch languages mid-thread unless the user switches.
+- **Length:** match answer length to the question. Narrow follow-ups (one planet, one tip) → \
+~1 short screen (roughly 120–250 words). Full chart / multi-theme asks may be longer, still scannable.
+- Prefer progressive disclosure: answer the ask first; offer deeper layers only if useful.
+
+## Tool Intent
+- **render_life_phases** only when the user asks about life phase, Saturn return, timing eras, or "what phase am I in".
+- Do **not** call life_phases for general natal overview, Moon, career, or daily forecast.
 
 ## Important Guidelines
-- Never claim to predict specific events with certainty
-- Always acknowledge the complexity of a full chart reading
-- If you don't have enough information, ask clarifying questions
-- Use tools when visual data would enhance the response
-- When you use a tool, integrate the returned data into your interpretation naturally
+- Never claim certain prediction of specific events
+- Prefer tool-grounded specifics over generic horoscope language
+- When tool results include errors (e.g. missing chart), explain briefly and recover
 """
 
 
@@ -60,6 +71,9 @@ Available tools:
 
 def build_system_prompt(
     chart_context: dict[str, Any] | None = None,
+    *,
+    chart_id: str | None = None,
+    today: str | None = None,
 ) -> str:
     """Build the full system prompt, optionally including injected chart data.
 
@@ -74,24 +88,44 @@ def build_system_prompt(
           ``sign_degree``)
         - ``aspects``: list of aspect dicts (with ``body_a``, ``body_b``,
           ``aspect``, ``orb``)
+    chart_id : str or None
+        UUID of the conversation's natal chart for transit tools.
+    today : str or None
+        ISO date string for relative transit windows.
 
     Returns
     -------
     str
         The complete system prompt with injected chart data.
     """
+    from datetime import date as _date
+
+    today = today or _date.today().isoformat()
+
     if not chart_context:
-        return BASE_SYSTEM_PROMPT
+        parts = [BASE_SYSTEM_PROMPT, f"\n\n## Session\nToday's date: **{today}**"]
+        return "\n".join(parts)
 
     # Start with base prompt and add a chart context section
     parts = [
         BASE_SYSTEM_PROMPT,
-        "\n\n## Current Chart Context",
+        "\n\n## Session",
+        f"\nToday's date: **{today}**",
     ]
+    if chart_id:
+        parts.append(
+            f"\nNatal chart_id for tools: `{chart_id}` "
+            "(pass this to render_transit_timeline; do **not** call render_natal_chart again)."
+        )
+    parts.append("\n\n## Current Chart Context")
 
     # Chart type
     chart_type = chart_context.get("chart_type", "natal")
     parts.append(f"\nChart type: **{chart_type.upper()}**")
+    parts.append(
+        "\nNatal placements are already loaded below — use them for interpretation. "
+        "Only call tools for **new** data (e.g. transits or life phases)."
+    )
 
     # Bodies (planets and points)
     bodies = chart_context.get("bodies", [])
@@ -119,10 +153,14 @@ def build_system_prompt(
                 f"| {h.get('house_number', '')} | {h.get('sign', '')} | {h.get('sign_degree', '')}° |"
             )
 
-    # Aspects
-    aspects = chart_context.get("aspects", [])
+    # Aspects (cap to top 12 by orb to limit prompt tokens)
+    aspects = list(chart_context.get("aspects", []) or [])
+    try:
+        aspects = sorted(aspects, key=lambda a: float(a.get("orb") or 99))[:12]
+    except (TypeError, ValueError):
+        aspects = aspects[:12]
     if aspects:
-        parts.append("\n### Aspects\n")
+        parts.append("\n### Key Aspects (tightest orbs)\n")
         parts.append("| Body A | Body B | Aspect | Orb |")
         parts.append("|--------|--------|--------|-----|")
         for a in aspects:

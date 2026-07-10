@@ -1,0 +1,123 @@
+{
+  "iteration": 1,
+  "scenarios": 1,
+  "passed": 1,
+  "failed": 0,
+  "total_tokens": 80521,
+  "total_latency_ms": 109094.13802894414,
+  "results": [
+    {
+      "name": "u7_extreme_ceiling",
+      "ok": true,
+      "passed_turns": 6,
+      "total_turns": 6,
+      "tokens": 80521,
+      "latency_ms": 109094.13802894414,
+      "error": null,
+      "turns": [
+        {
+          "id": "phase",
+          "passed": true,
+          "status": 201,
+          "tools": [
+            "render_life_phases"
+          ],
+          "rounds": 2,
+          "prompt_tokens": 5912,
+          "completion_tokens": 1195,
+          "total_tokens": 7107,
+          "reasoning_tokens": 471,
+          "latency_ms": 14661.01686298498,
+          "reply_len": 2799,
+          "error": null,
+          "exception": null,
+          "preview": "Here's what the stars reveal about your life phase and Saturn return.\n\n---\n\n## 🌱 Your Current Life Phase: **Expansion & Growth (2019–2029)**\n\nYou've already completed your **First Saturn Return** (2015–2019), which for you was a major matur"
+        },
+        {
+          "id": "year",
+          "passed": true,
+          "status": 201,
+          "tools": [
+            "render_transit_timeline"
+          ],
+          "rounds": 2,
+          "prompt_tokens": 10953,
+          "completion_tokens": 3650,
+          "total_tokens": 14603,
+          "reasoning_tokens": 2194,
+          "latency_ms": 37930.840786983026,
+          "reply_len": 5003,
+          "error": null,
+          "exception": null,
+          "preview": "That's a rich data set — 30 significant aspects flagged across the year. Let me pull out **every major outer-planet transit** (Saturn, Uranus, Neptune, Pluto) and arrange them by season.\n\nI'll also note which aspects are **applying** (still"
+        },
+        {
+          "id": "window90",
+          "passed": true,
+          "status": 201,
+          "tools": [
+            "render_transit_timeline"
+          ],
+          "rounds": 2,
+          "prompt_tokens": 18437,
+          "completion_tokens": 2837,
+          "total_tokens": 21274,
+          "reasoning_tokens": 1641,
+          "latency_ms": 33425.802095996914,
+          "reply_len": 3986,
+          "error": null,
+          "exception": null,
+          "preview": "Good — the tool returned the current snapshot, so I'll calculate **approximate exact dates** using the applying orbs and planetary speeds. Here are the **top 5 exact hits** within the next 90 days (through ~Oct 8, 2026), ranked by significa"
+        },
+        {
+          "id": "mega",
+          "passed": true,
+          "status": 201,
+          "tools": [],
+          "rounds": 1,
+          "prompt_tokens": 11486,
+          "completion_tokens": 909,
+          "total_tokens": 12395,
+          "reasoning_tokens": 218,
+          "latency_ms": 13316.77544399281,
+          "reply_len": 2860,
+          "error": null,
+          "exception": null,
+          "preview": "Here you go — five sections, straight to the point.\n\n---\n\n## 1. Current Life Phase: **Expansion & Growth (2019–2029)**\n\nYou're in the Jupiter-driven decade following your first Saturn return. The foundation you rebuilt in your late 20s/earl"
+        },
+        {
+          "id": "memory",
+          "passed": true,
+          "status": 201,
+          "tools": [],
+          "rounds": 1,
+          "prompt_tokens": 12200,
+          "completion_tokens": 137,
+          "total_tokens": 12337,
+          "reasoning_tokens": 37,
+          "latency_ms": 2878.991726000095,
+          "reply_len": 408,
+          "error": null,
+          "exception": null,
+          "preview": "1. **Current Phase:** You're in the **Expansion & Growth** decade (2019–2029), the Jupiter-driven post–Saturn-return window where you build boldly on the foundation you restructured in your late 20s.\n\n2. **Hardest Transit:** The **Pluto opp"
+        },
+        {
+          "id": "short",
+          "passed": true,
+          "status": 201,
+          "tools": [],
+          "rounds": 1,
+          "prompt_tokens": 12315,
+          "completion_tokens": 490,
+          "total_tokens": 12805,
+          "reasoning_tokens": 484,
+          "latency_ms": 6880.711112986319,
+          "reply_len": 15,
+          "error": null,
+          "exception": null,
+          "preview": "**Excavation.**"
+        }
+      ]
+    }
+  ]
+}

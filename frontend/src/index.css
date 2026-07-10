@@ -11,7 +11,7 @@
   }
 
   body {
-    @apply bg-gray-950 text-gray-100 antialiased;
+    @apply bg-black text-[#f5f0e6] antialiased;
     min-height: 100dvh;
   }
 
@@ -21,7 +21,6 @@
     flex-direction: column;
   }
 
-  /* Custom scrollbar for dark theme */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -32,47 +31,117 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-700 rounded-full;
+    @apply bg-zinc-700 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-600;
+    @apply bg-zinc-600;
   }
+}
+
+/* ── Smooth scrolling for form panel ─────────────────── */
+
+.form-scroll::-webkit-scrollbar { width: 4px; }
+.form-scroll::-webkit-scrollbar-track { background: transparent; }
+.form-scroll::-webkit-scrollbar-thumb { background: rgba(217, 119, 6, 0.15); border-radius: 2px; }
+.form-scroll::-webkit-scrollbar-thumb:hover { background: rgba(217, 119, 6, 0.3); }
+
+/* ── Zodiac wheel ────────────────────────────────────── */
+
+.zodiac-wheel {
+  filter: drop-shadow(0 0 24px rgba(251, 191, 36, 0.08));
+}
+
+/* ── Planet markers hover ────────────────────────────── */
+
+.planet-marker {
+  transition: opacity 0.15s ease;
+}
+.planet-marker:hover circle {
+  stroke: #fcd34d !important;
+  stroke-opacity: 1 !important;
+}
+.planet-marker:hover text {
+  fill: #fcd34d !important;
+}
+
+/* ── Sign segment hover ──────────────────────────────── */
+
+.sign-segment:hover path {
+  fill: rgba(251, 191, 36, 0.1) !important;
+  stroke-opacity: 0.75 !important;
+}
+.sign-segment path {
+  transition: fill 0.2s ease, stroke-opacity 0.2s ease;
+}
+
+/* Aspect lines slightly brighter on hover */
+.aspect-line:hover {
+  stroke-opacity: 1 !important;
+}
+
+/* ── Glass morphism card ──────────────────────────────── */
+
+.glass-card {
+  background: linear-gradient(
+    135deg,
+    rgba(18, 18, 18, 0.85) 0%,
+    rgba(30, 30, 30, 0.75) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 197, 169, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.glass-card:hover {
+  border-color: rgba(212, 197, 169, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5),
+              0 0 30px rgba(217, 119, 6, 0.05);
+}
+
+/* ── Input glow ───────────────────────────────────────── */
+
+.input-glow:focus {
+  border-color: rgba(217, 119, 6, 0.4);
+  box-shadow: 0 0 0 1px rgba(217, 119, 6, 0.2),
+              0 0 20px rgba(217, 119, 6, 0.05);
 }
 
 /* ── Components ───────────────────────────────────────── */
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg
-           bg-accent hover:bg-accent-dark text-white font-medium
-           transition-colors duration-150 focus:outline-none focus:ring-2
-           focus:ring-accent/50 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg
+           bg-accent hover:bg-ember text-white font-medium text-sm
+           transition-all duration-200 focus:outline-none focus:ring-2
+           focus:ring-accent/40 disabled:opacity-40 disabled:cursor-not-allowed
+           tracking-wide uppercase;
   }
 
   .btn-ghost {
     @apply inline-flex items-center justify-center px-3 py-1.5 rounded-lg
-           text-gray-300 hover:text-white hover:bg-surface-light
+           text-zinc-400 hover:text-beige hover:bg-surface-light
            transition-colors duration-150 focus:outline-none focus:ring-2
            focus:ring-accent/30;
   }
 
   .input-field {
-    @apply w-full px-3 py-2 rounded-lg bg-surface-light border border-gray-700
-           text-gray-100 placeholder-gray-500
-           focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/50
-           transition-colors duration-150;
+    @apply w-full px-4 py-3 rounded-lg bg-black/40 border border-zinc-800
+           text-beige-light placeholder-beige-dark/40 text-sm
+           transition-all duration-200
+           focus:outline-none focus:border-accent/50 input-glow;
   }
 
   .card {
-    @apply rounded-xl bg-surface border border-gray-800 shadow-lg;
+    @apply rounded-xl bg-[#0d0d0d] border border-zinc-800/50 shadow-lg;
   }
 
   .chip {
     @apply px-3 py-1.5 rounded-full text-sm font-medium
-           bg-surface-light text-gray-300 hover:text-white hover:bg-gray-700
+           bg-zinc-900/80 text-zinc-400 hover:text-beige hover:bg-zinc-800
            transition-colors duration-150 cursor-pointer
-           border border-gray-700/50;
+           border border-zinc-800/30;
   }
 }
 

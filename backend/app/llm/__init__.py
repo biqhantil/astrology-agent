@@ -1,7 +1,19 @@
-"""LLM integration layer for the pi.dev SDK.
+"""LLM integration — public barrel (agentic R5).
 
-Modules:
-  - client.py     SDK wrapper, streaming interface
-  - prompts.py    System prompt templates with chart context injection
-  - tools.py      Tool definition registry (JSON Schema for LLM)
+Import from here for chat + tools::
+
+    from app.llm import chat_completion, build_system_prompt, TOOL_DEFINITIONS, execute_tool
 """
+
+from app.llm.client import LLMProviderError, LLMResponse, chat_completion
+from app.llm.prompts import build_system_prompt
+from app.llm.tools import TOOL_DEFINITIONS, execute_tool
+
+__all__ = [
+    "LLMProviderError",
+    "LLMResponse",
+    "chat_completion",
+    "build_system_prompt",
+    "TOOL_DEFINITIONS",
+    "execute_tool",
+]

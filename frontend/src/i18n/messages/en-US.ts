@@ -1,0 +1,160 @@
+import type { MessageTree } from '../types';
+
+const enUS: MessageTree = {
+  app: {
+    name: 'Astrology Agent',
+    anonymousUser: 'Anonymous User',
+    notConnected: 'Not connected',
+    reset: 'Reset',
+    exit: 'Exit',
+    resetTitle: 'Clear session and start over',
+    logoutTitle: 'Log out',
+    language: 'Language',
+  },
+  common: {
+    loading: 'Loading…',
+    tryAgain: 'Try Again',
+    major: 'major',
+    noChartData: 'No chart data.',
+    noMajorAspects: 'No major aspects.',
+    toolCall: 'Tool call',
+  },
+  auth: {
+    providerDev: 'DEV',
+    providerGoogle: 'Google',
+    providerAnon: 'Anon',
+  },
+  workspace: {
+    calculatingChart: 'Calculating your natal chart...',
+    chartCalcFailed: 'Chart calculation failed',
+  },
+  chart: {
+    natal: 'Natal',
+    birthChart: 'Birth chart',
+    natalAspects: 'Natal aspects',
+    skyAspects: 'Sky aspects',
+    natalMonth: 'Natal month',
+    skyFor: 'Sky for',
+    born: 'Born',
+    midMonthSky: 'Mid-month sky',
+    updatingChart: 'Updating chart…',
+    birth: 'Birth',
+    today: 'Today',
+    jumpBirth: 'Jump to birth month',
+    jumpToday: 'Jump to current month',
+    selectMonth: 'Select month',
+    timelineAria: 'Chart timeline by month',
+    natalHint: 'Natal chart · slider steps by month',
+    monthlySky: 'Monthly sky',
+    askAgent: 'Ask agent for analysis',
+    scope: 'Scope',
+    thisMonth: 'This month',
+    thisYear: 'This year',
+    midMonthDay: 'Mid-month day',
+  },
+  analysis: {
+    day:
+      'Please analyze my chart and key themes for {{date}}. Include major transits for that day relative to my natal chart, and practical guidance. Reply in English.',
+    month:
+      'Please give me a month-ahead analysis for {{month}}. Cover major transits, timing windows, and themes for love, work, and growth. Reply in English.',
+    year:
+      'Please give me a year-ahead analysis for {{year}}. Highlight Saturn/outer planet themes, eclipses if relevant, and quarterly focus areas. Reply in English.',
+  },
+  chat: {
+    placeholder: 'Ask about your chart...',
+    connecting: 'Connecting to server...',
+    empty:
+      'Start a conversation by typing a message or choosing a preset.',
+    consulting: 'Consulting the stars...',
+    send: 'Send message',
+    standaloneReply:
+      'You said: "{{text}}"\n\nI\'m your astrology agent, ready to interpret your chart once the backend is connected via SSE.',
+  },
+  presets: {
+    daily: 'Daily',
+    weekly: 'Weekly',
+    myChart: 'My Chart',
+    saturnReturn: 'Saturn Return',
+    transits: 'Current Transits',
+    yearAhead: 'Year Ahead',
+    dailyPrompt:
+      'What do the stars say about today? Give me a daily astrological forecast. Reply in English.',
+    weeklyPrompt:
+      'Give me a weekly astrological forecast for this week. Reply in English.',
+    myChartPrompt:
+      'Show me my natal chart and explain the main placements. Reply in English.',
+    saturnReturnPrompt:
+      'Tell me about my Saturn return. When is it and what does it mean? Reply in English.',
+    transitsPrompt:
+      'What are the current transits affecting my chart? Reply in English.',
+    yearAheadPrompt:
+      'Give me a year-ahead forecast based on my chart. Reply in English.',
+  },
+  profile: {
+    title: 'Celestial Birth',
+    subtitle:
+      'Your cosmic blueprint, calculated from the heavens at your first breath.',
+    birthDate: 'Birth Date',
+    birthTime: 'Birth Time',
+    optional: '(optional)',
+    placeOfBirth: 'Place of Birth',
+    searchCity: 'Search city, region, country...',
+    timezone: 'Timezone',
+    houseSystem: 'House System',
+    latitude: 'Latitude',
+    longitude: 'Longitude',
+    save: 'Reveal My Natal Chart',
+    saving: 'Computing Your Chart...',
+    requiredFields: 'Birth date, timezone, and location are required.',
+    saveFailed: 'Failed to save profile',
+    footer: 'Swiss Ephemeris · Precise celestial calculation',
+  },
+  body: {
+    sun: 'Sun',
+    moon: 'Moon',
+    mercury: 'Mercury',
+    venus: 'Venus',
+    mars: 'Mars',
+    jupiter: 'Jupiter',
+    saturn: 'Saturn',
+    uranus: 'Uranus',
+    neptune: 'Neptune',
+    pluto: 'Pluto',
+    north_node: 'North Node',
+    south_node: 'South Node',
+    chiron: 'Chiron',
+    asc: 'Ascendant',
+    mc: 'Midheaven',
+    dsc: 'Descendant',
+    ic: 'Imum Coeli',
+    lilith: 'Lilith',
+    part_of_fortune: 'Part of Fortune',
+  },
+  sign: {
+    aries: 'Aries',
+    taurus: 'Taurus',
+    gemini: 'Gemini',
+    cancer: 'Cancer',
+    leo: 'Leo',
+    virgo: 'Virgo',
+    libra: 'Libra',
+    scorpio: 'Scorpio',
+    sagittarius: 'Sagittarius',
+    capricorn: 'Capricorn',
+    aquarius: 'Aquarius',
+    pisces: 'Pisces',
+  },
+  dignity: {
+    domicile: 'dom',
+    exaltation: 'ex',
+    detriment: 'det',
+    fall: 'fall',
+    peregrine: '',
+  },
+  month: {
+    short: 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec',
+    dayShort: 'Su,Mo,Tu,We,Th,Fr,Sa',
+  },
+};
+
+export default enUS;

@@ -4,7 +4,7 @@ Uses a lightweight approach: each test function that needs database access
 gets an ``AsyncMock`` connection injected via dependency override.
 
 For endpoints that need real DB integration, use the ``db_session`` fixture
-(requires a running PostgreSQL).
+(uses SQLite via app.database when enabled).
 """
 
 from __future__ import annotations

@@ -1,57 +1,86 @@
 """Async HTTP client for the OpenCode Go API (OpenAI-compatible chat completions).
 
 Uses ``httpx.AsyncClient`` for streaming HTTP requests.
-API key is read from the ``OPENCODE_API_KEY`` environment variable.
+Config from pydantic settings: OPENCODE_API_KEY, OPENCODE_API_BASE, OPENCODE_MODEL.
 """
 
 from __future__ import annotations
 
 import json
-import os
 from typing import Any
 
 import httpx
 
-# ── Constants ───────────────────────────────────────────────────
+from app.config import settings
 
-OPENCODE_API_BASE = "https://opencode.ai/zen/go/v1"
-OPENCODE_MODEL = "deepseek-v4-flash"
+# ── Defaults (overridable via env) ──────────────────────────────
+
 DEFAULT_MAX_TOKENS = 4096
 DEFAULT_TIMEOUT = 120.0
 
-# API key from environment
-API_KEY: str = os.environ.get("OPENCODE_API_KEY", "")
+
+class LLMProviderError(RuntimeError):
+    """Raised when the upstream LLM API fails (auth, credits, network)."""
+
+    def __init__(self, status_code: int, detail: str) -> None:
+        self.status_code = status_code
+        self.detail = detail
+        super().__init__(detail)
+
+
+def _friendly_provider_error(status_code: int, body: str) -> str:
+    lower = body.lower()
+    if "insufficient balance" in lower or "credits" in lower or "billing" in lower:
+        return (
+            "LLM provider rejected the request: insufficient credits/balance. "
+            "Top up OpenCode billing at the workspace billing URL, then retry. "
+            "Multi-turn harness requires a live funded key."
+        )
+    if status_code in (401, 403):
+        return (
+            "LLM provider authentication failed. Check OPENCODE_API_KEY in backend/.env "
+            "and ensure LLM_MODE=live."
+        )
+    return f"LLM provider error ({status_code}): {body[:400]}"
+
+
+def _api_key() -> str:
+    return settings.OPENCODE_API_KEY or ""
+
+
+def _api_base() -> str:
+    base = (settings.OPENCODE_API_BASE or "https://opencode.ai/zen/go/v1").rstrip("/")
+    # Allow full chat/completions URL in env — strip to base
+    if base.endswith("/chat/completions"):
+        base = base[: -len("/chat/completions")].rstrip("/")
+    return base
+
+
+def _model() -> str:
+    return settings.OPENCODE_MODEL or "deepseek-v4-flash"
 
 
 # ── Response model ──────────────────────────────────────────────
 
 
 class LLMResponse:
-    """Parsed response from an LLM call.
-
-    Attributes
-    ----------
-    content : str | None
-        The text content of the assistant's reply, or ``None`` if
-        the response contains only tool calls.
-    tool_calls : list[dict] | None
-        A list of tool call dicts following OpenAI format:
-        ``[{"id": "...", "type": "function", "function": {"name": "...", "arguments": {...}}}, ...]``
-        ``None`` if no tool calls were made.
-    """
+    """Parsed response from an LLM call."""
 
     def __init__(
         self,
         content: str | None = None,
         tool_calls: list[dict] | None = None,
+        usage: dict[str, Any] | None = None,
     ) -> None:
         self.content = content
         self.tool_calls = tool_calls
+        # OpenAI-style usage when the provider sends it (stream final chunk)
+        self.usage = usage or {}
 
     def __repr__(self) -> str:
         return (
             f"LLMResponse(content={self.content!r}, "
-            f"tool_calls={self.tool_calls!r})"
+            f"tool_calls={self.tool_calls!r}, usage={self.usage!r})"
         )
 
 
@@ -63,59 +92,38 @@ async def chat_completion(
     system_prompt: str | None = None,
     tools: list[dict[str, Any]] | None = None,
     *,
-    model: str = OPENCODE_MODEL,
+    model: str | None = None,
     max_tokens: int = DEFAULT_MAX_TOKENS,
     timeout: float = DEFAULT_TIMEOUT,
+    on_token: Any | None = None,
 ) -> LLMResponse:
-    """Send a chat completion request (streaming) and return the assembled response.
+    """Send a chat completion request (streaming) and return the assembled response."""
+    mode = (settings.LLM_MODE or "live").strip().lower()
+    if mode == "mock":
+        from app.llm.mock_client import mock_chat_completion
 
-    Parameters
-    ----------
-    messages : list[dict]
-        The conversation messages so far in OpenAI format::
-
-            {"role": "user" | "assistant" | "tool",
-             "content": str | None,
-             "tool_calls": [...] | None,
-             "tool_call_id": str | None}
-
-    system_prompt : str or None
-        If provided, inserted as a ``system`` message at the start.
-    tools : list[dict] or None
-        JSON Schema tool definitions in OpenAI format.
-    model : str
-        Model identifier (default ``deepseek-v4-flash``).
-    max_tokens : int
-        Maximum tokens in the response.
-    timeout : float
-        HTTP request timeout in seconds.
-
-    Returns
-    -------
-    LLMResponse
-        Parsed content and/or tool_calls from the assistant.
-
-    Raises
-    ------
-    RuntimeError
-        If ``OPENCODE_API_KEY`` is not set.
-    httpx.HTTPStatusError
-        If the API returns a non-2xx status.
-    """
-    if not API_KEY:
-        raise RuntimeError(
-            "OPENCODE_API_KEY environment variable is not set. "
-            "Set it to your OpenCode Go API key before starting the server."
+        return await mock_chat_completion(
+            messages=messages,
+            system_prompt=system_prompt,
+            tools=tools,
+            model=model or _model(),
+            max_tokens=max_tokens,
+            on_token=on_token,
         )
 
-    # Build the full message list
+    api_key = _api_key()
+    if not api_key:
+        raise RuntimeError(
+            "OPENCODE_API_KEY is not set. "
+            "Add it to backend/.env and use LLM_MODE=live."
+        )
+
     full_messages: list[dict[str, Any]] = list(messages)
     if system_prompt:
         full_messages.insert(0, {"role": "system", "content": system_prompt})
 
-    # Build the request body
     body: dict[str, Any] = {
-        "model": model,
+        "model": model or _model(),
         "messages": full_messages,
         "stream": True,
         "max_tokens": max_tokens,
@@ -124,29 +132,64 @@ async def chat_completion(
         body["tools"] = tools
 
     headers = {
-        "Authorization": f"Bearer {API_KEY}",
+        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
         "Accept": "text/event-stream",
     }
 
-    async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
-        async with client.stream(
-            "POST",
-            f"{OPENCODE_API_BASE}/chat/completions",
-            json=body,
-            headers=headers,
-        ) as response:
-            response.raise_for_status()
-            return await _parse_stream(response)
+    url = f"{_api_base()}/chat/completions"
+
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
+            async with client.stream(
+                "POST",
+                url,
+                json=body,
+                headers=headers,
+            ) as response:
+                if response.status_code >= 400:
+                    err_text = ""
+                    try:
+                        err_text = (await response.aread()).decode("utf-8", errors="replace")
+                    except Exception:
+                        err_text = response.reason_phrase
+                    raise LLMProviderError(
+                        status_code=response.status_code,
+                        detail=_friendly_provider_error(response.status_code, err_text),
+                    )
+                return await _parse_stream(response, on_token=on_token)
+    except LLMProviderError:
+        raise
+    except httpx.TimeoutException as exc:
+        raise LLMProviderError(
+            status_code=504,
+            detail="LLM provider timed out. Try again.",
+        ) from exc
+    except httpx.HTTPError as exc:
+        raise LLMProviderError(
+            status_code=502,
+            detail=f"LLM provider network error: {exc}",
+        ) from exc
 
 
 # ── Internal helpers ────────────────────────────────────────────
 
 
-async def _parse_stream(response: httpx.Response) -> LLMResponse:
-    """Parse an SSE stream from the API and accumulate the full response."""
+async def _parse_stream(
+    response: httpx.Response,
+    *,
+    on_token: Any | None = None,
+) -> LLMResponse:
+    """Parse an SSE stream; accumulate content (and reasoning as fallback).
+
+    deepseek-v4-flash may stream ``reasoning_content`` first, then ``content``.
+    User-facing text uses ``content`` only; if content stays empty, fall back
+    to reasoning so we never return a blank assistant message.
+    """
     content_parts: list[str] = []
+    reasoning_parts: list[str] = []
     tool_calls: dict[int, dict[str, Any]] = {}
+    usage: dict[str, Any] = {}
 
     async for line in response.aiter_lines():
         if not line.startswith("data: "):
@@ -161,6 +204,11 @@ async def _parse_stream(response: httpx.Response) -> LLMResponse:
         except json.JSONDecodeError:
             continue
 
+        # Usage often arrives on a late chunk (sometimes with empty choices)
+        chunk_usage = chunk.get("usage")
+        if isinstance(chunk_usage, dict) and chunk_usage:
+            usage = chunk_usage
+
         choices = chunk.get("choices", [])
         if not choices:
             continue
@@ -168,12 +216,16 @@ async def _parse_stream(response: httpx.Response) -> LLMResponse:
         delta = choices[0].get("delta", {})
         finish_reason = choices[0].get("finish_reason")
 
-        # Accumulate text content
         content = delta.get("content")
         if content is not None:
             content_parts.append(content)
+            if on_token is not None:
+                await on_token(content)
 
-        # Accumulate tool calls (streaming chunks)
+        reasoning = delta.get("reasoning_content")
+        if reasoning:
+            reasoning_parts.append(reasoning)
+
         raw_tool_calls = delta.get("tool_calls")
         if raw_tool_calls:
             for tc in raw_tool_calls:
@@ -196,20 +248,30 @@ async def _parse_stream(response: httpx.Response) -> LLMResponse:
                     if "arguments" in fn and fn["arguments"]:
                         existing["function"]["arguments"] += fn["arguments"]
 
-        if finish_reason == "stop":
-            break
+        if finish_reason in ("stop", "tool_calls", "end_turn"):
+            # Don't break early on null finish — some providers send more chunks
+            if finish_reason == "stop" and content_parts:
+                break
+            if finish_reason in ("tool_calls", "end_turn"):
+                break
 
-    content = "".join(content_parts) if content_parts else None
+    content = "".join(content_parts).strip() if content_parts else None
+    if not content and reasoning_parts:
+        # Fallback only if the model produced no public content
+        content = "".join(reasoning_parts).strip() or None
+
     tc_list = list(tool_calls.values()) if tool_calls else None
 
-    # Parse ``arguments`` JSON string for each tool call
+    # Keep ``arguments`` as a JSON *string* in tool_calls so multi-turn
+    # history can be re-sent to OpenAI-compatible APIs. Callers that need a
+    # dict should parse a copy (see messages.execute_tool path).
     if tc_list:
         for tc in tc_list:
-            args_str = tc["function"]["arguments"]
-            if isinstance(args_str, str):
-                try:
-                    tc["function"]["arguments"] = json.loads(args_str)
-                except (json.JSONDecodeError, TypeError):
-                    pass
+            args_str = tc["function"].get("arguments") or ""
+            if not isinstance(args_str, str):
+                tc["function"]["arguments"] = json.dumps(args_str)
+            # Ensure empty args are valid JSON object string
+            elif args_str.strip() == "":
+                tc["function"]["arguments"] = "{}"
 
-    return LLMResponse(content=content, tool_calls=tc_list)
+    return LLMResponse(content=content, tool_calls=tc_list, usage=usage)

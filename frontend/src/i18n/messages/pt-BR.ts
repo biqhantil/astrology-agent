@@ -1,0 +1,160 @@
+import type { MessageTree } from '../types';
+
+const ptBR: MessageTree = {
+  app: {
+    name: 'Agente de Astrologia',
+    anonymousUser: 'Usuário anônimo',
+    notConnected: 'Não conectado',
+    reset: 'Reiniciar',
+    exit: 'Sair',
+    resetTitle: 'Limpar sessão e começar de novo',
+    logoutTitle: 'Sair da conta',
+    language: 'Idioma',
+  },
+  common: {
+    loading: 'Carregando…',
+    tryAgain: 'Tentar de novo',
+    major: 'maiores',
+    noChartData: 'Sem dados do mapa.',
+    noMajorAspects: 'Sem aspectos maiores.',
+    toolCall: 'Chamada de ferramenta',
+  },
+  auth: {
+    providerDev: 'DEV',
+    providerGoogle: 'Google',
+    providerAnon: 'Anôn.',
+  },
+  workspace: {
+    calculatingChart: 'Calculando seu mapa natal...',
+    chartCalcFailed: 'Falha ao calcular o mapa',
+  },
+  chart: {
+    natal: 'Natal',
+    birthChart: 'Mapa natal',
+    natalAspects: 'Aspectos natais',
+    skyAspects: 'Aspectos do céu',
+    natalMonth: 'Mês natal',
+    skyFor: 'Céu em',
+    born: 'Nascimento',
+    midMonthSky: 'Céu de meados do mês',
+    updatingChart: 'Atualizando mapa…',
+    birth: 'Nasc.',
+    today: 'Hoje',
+    jumpBirth: 'Ir ao mês de nascimento',
+    jumpToday: 'Ir ao mês atual',
+    selectMonth: 'Selecionar mês',
+    timelineAria: 'Linha do tempo do mapa por mês',
+    natalHint: 'Mapa natal · o controle desliza por mês',
+    monthlySky: 'Céu mensal',
+    askAgent: 'Pedir análise ao agente',
+    scope: 'Escopo',
+    thisMonth: 'Este mês',
+    thisYear: 'Este ano',
+    midMonthDay: 'Dia de meados do mês',
+  },
+  analysis: {
+    day:
+      'Analise meu mapa e os temas principais para {{date}}. Inclua trânsitos importantes desse dia em relação ao meu mapa natal e orientações práticas. Responda em português do Brasil.',
+    month:
+      'Faça uma análise do mês de {{month}}. Cubra trânsitos principais, janelas de tempo e temas de amor, trabalho e crescimento. Responda em português do Brasil.',
+    year:
+      'Faça uma análise do ano de {{year}}. Destaque temas de Saturno/planetas externos, eclipses se relevantes e focos por trimestre. Responda em português do Brasil.',
+  },
+  chat: {
+    placeholder: 'Pergunte sobre o seu mapa...',
+    connecting: 'Conectando ao servidor...',
+    empty:
+      'Comece uma conversa digitando uma mensagem ou escolhendo um atalho.',
+    consulting: 'Consultando as estrelas...',
+    send: 'Enviar mensagem',
+    standaloneReply:
+      'Você disse: "{{text}}"\n\nSou seu agente de astrologia, pronto para interpretar seu mapa quando o backend estiver conectado via SSE.',
+  },
+  presets: {
+    daily: 'Diário',
+    weekly: 'Semanal',
+    myChart: 'Meu mapa',
+    saturnReturn: 'Retorno de Saturno',
+    transits: 'Trânsitos atuais',
+    yearAhead: 'Ano à frente',
+    dailyPrompt:
+      'O que as estrelas dizem sobre hoje? Me dê um prognóstico astrológico diário. Responda em português do Brasil.',
+    weeklyPrompt:
+      'Me dê um prognóstico astrológico semanal para esta semana. Responda em português do Brasil.',
+    myChartPrompt:
+      'Mostre meu mapa natal e explique as principais posições. Responda em português do Brasil.',
+    saturnReturnPrompt:
+      'Fale sobre meu retorno de Saturno. Quando é e o que significa? Responda em português do Brasil.',
+    transitsPrompt:
+      'Quais são os trânsitos atuais afetando meu mapa? Responda em português do Brasil.',
+    yearAheadPrompt:
+      'Me dê um prognóstico do ano à frente com base no meu mapa. Responda em português do Brasil.',
+  },
+  profile: {
+    title: 'Nascimento Celeste',
+    subtitle:
+      'Seu mapa cósmico, calculado a partir dos céus no momento do seu primeiro suspiro.',
+    birthDate: 'Data de nascimento',
+    birthTime: 'Hora de nascimento',
+    optional: '(opcional)',
+    placeOfBirth: 'Local de nascimento',
+    searchCity: 'Buscar cidade, região, país...',
+    timezone: 'Fuso horário',
+    houseSystem: 'Sistema de casas',
+    latitude: 'Latitude',
+    longitude: 'Longitude',
+    save: 'Revelar meu mapa natal',
+    saving: 'Calculando seu mapa...',
+    requiredFields: 'Data de nascimento, fuso e local são obrigatórios.',
+    saveFailed: 'Falha ao salvar o perfil',
+    footer: 'Swiss Ephemeris · Cálculo celeste preciso',
+  },
+  body: {
+    sun: 'Sol',
+    moon: 'Lua',
+    mercury: 'Mercúrio',
+    venus: 'Vênus',
+    mars: 'Marte',
+    jupiter: 'Júpiter',
+    saturn: 'Saturno',
+    uranus: 'Urano',
+    neptune: 'Netuno',
+    pluto: 'Plutão',
+    north_node: 'Nodo Norte',
+    south_node: 'Nodo Sul',
+    chiron: 'Quíron',
+    asc: 'Ascendente',
+    mc: 'Meio do Céu',
+    dsc: 'Descendente',
+    ic: 'Fundo do Céu',
+    lilith: 'Lilith',
+    part_of_fortune: 'Parte da Fortuna',
+  },
+  sign: {
+    aries: 'Áries',
+    taurus: 'Touro',
+    gemini: 'Gêmeos',
+    cancer: 'Câncer',
+    leo: 'Leão',
+    virgo: 'Virgem',
+    libra: 'Libra',
+    scorpio: 'Escorpião',
+    sagittarius: 'Sagitário',
+    capricorn: 'Capricórnio',
+    aquarius: 'Aquário',
+    pisces: 'Peixes',
+  },
+  dignity: {
+    domicile: 'dom',
+    exaltation: 'ex',
+    detriment: 'det',
+    fall: 'queda',
+    peregrine: '',
+  },
+  month: {
+    short: 'Jan,Fev,Mar,Abr,Mai,Jun,Jul,Ago,Set,Out,Nov,Dez',
+    dayShort: 'Do,Se,Te,Qu,Qu,Se,Sá',
+  },
+};
+
+export default ptBR;

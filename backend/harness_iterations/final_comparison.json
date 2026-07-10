@@ -1,0 +1,93 @@
+{
+  "iterations_1_to_5": [
+    {
+      "label": "i1 baseline",
+      "pass_rate": "18/18",
+      "tok": 191335,
+      "lat_s": 407.3,
+      "llm_rounds": 29,
+      "natal_calls_logged": 16,
+      "transit_calls_logged": 12,
+      "no_tool_turns": 1,
+      "avg_reply_len": 4186,
+      "scenario_pass": 5
+    },
+    {
+      "label": "i2 after prompt/tool discipline",
+      "pass_rate": "18/18",
+      "tok": 171741,
+      "lat_s": 410.5,
+      "llm_rounds": 28,
+      "natal_calls_logged": 16,
+      "transit_calls_logged": 11,
+      "no_tool_turns": 1,
+      "avg_reply_len": 4082,
+      "scenario_pass": 5
+    },
+    {
+      "label": "i3 re-run",
+      "pass_rate": "18/18",
+      "tok": 176647,
+      "lat_s": 421.1,
+      "llm_rounds": 29,
+      "natal_calls_logged": 15,
+      "transit_calls_logged": 10,
+      "no_tool_turns": 3,
+      "avg_reply_len": 3528,
+      "scenario_pass": 5
+    },
+    {
+      "label": "i4 re-run",
+      "pass_rate": "18/18",
+      "tok": 184847,
+      "lat_s": 464.8,
+      "llm_rounds": 28,
+      "natal_calls_logged": 16,
+      "transit_calls_logged": 13,
+      "no_tool_turns": 1,
+      "avg_reply_len": 3888,
+      "scenario_pass": 5
+    },
+    {
+      "label": "i5 re-run",
+      "pass_rate": "18/18",
+      "tok": 173396,
+      "lat_s": 395.8,
+      "llm_rounds": 28,
+      "natal_calls_logged": 16,
+      "transit_calls_logged": 10,
+      "no_tool_turns": 1,
+      "avg_reply_len": 4027,
+      "scenario_pass": 5
+    }
+  ],
+  "post_fix": {
+    "label": "post-fix chart_context+tool filter",
+    "pass_rate": "18/18",
+    "tok": 180595,
+    "lat_s": 377.3,
+    "llm_rounds": 25,
+    "natal_calls_logged": 0,
+    "transit_calls_logged": 5,
+    "no_tool_turns": 12,
+    "avg_reply_len": 3836,
+    "scenario_pass": 5
+  },
+  "improvements": {
+    "hard_failures_i1_to_i5": 0,
+    "token_i1": 191335,
+    "token_i5": 173396,
+    "token_post_fix": 180595,
+    "root_cause_found": "PATCH /conversations ignored chart_context_id \u2014 natal never injected",
+    "fixes": [
+      "prompt tool discipline + aspect cap",
+      "transit window clamp 90d",
+      "MAX_TOOL_ROUNDS=3",
+      "tool args JSON string normalize",
+      "hide render_natal_chart when chart injected",
+      "ConversationUpdate accepts chart_context_id",
+      "harness per-turn tools_used (not history merge)",
+      "u4 scenario expect grounding not forced natal tool"
+    ]
+  }
+}

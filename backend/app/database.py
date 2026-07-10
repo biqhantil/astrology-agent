@@ -304,6 +304,28 @@ class DatabasePool:
         await self._conn.executescript(sql)
         await self._conn.commit()
 
+        # Idempotent column additions for existing databases
+        # Note: For fresh databases these columns are already in the CREATE TABLE.
+        # This is only needed when upgrading an existing v1 database.
+        try:
+            await self._conn.execute(
+                "ALTER TABLE users ADD COLUMN auth_provider TEXT NOT NULL DEFAULT 'anonymous'"
+            )
+        except Exception:
+            pass
+        try:
+            await self._conn.execute(
+                "ALTER TABLE users ADD COLUMN google_sub TEXT NULL"
+            )
+        except Exception:
+            pass
+        try:
+            await self._conn.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google_sub ON users(google_sub)"
+            )
+        except Exception:
+            pass
+
     # ── Access ──────────────────────────────────────────────────
 
     async def execute(self, query: str, *args: object) -> str:

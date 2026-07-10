@@ -1,0 +1,24 @@
+{
+  "step": "u5_life_phase_long",
+  "pass": true,
+  "tokens": 54447,
+  "latency_ms": 100842.22429501824,
+  "soft_ceiling": true,
+  "ux_wins": [
+    "Correct life_phases tool on phase ask",
+    "English replies",
+    "Action practices without extra tools"
+  ],
+  "ux_issues": [
+    "year turn 21k tokens \u2014 soft cost ceiling for 12-month asks",
+    "emotion unnecessarily called transit (user asked Moon/emotion, not sky)",
+    "year tool returned near-term snapshot; model admits and fills with general motion \u2014 fidelity risk for product",
+    "history bloat: action prompt already 11.5k with no tools",
+    "emotion reply 6.4k chars \u2014 too long for chat"
+  ],
+  "product_actions": [
+    "For \"12 months\" clamp/summarize tool payload aggressively (seasons not every hit)",
+    "Do not call transit for pure natal emotion questions",
+    "UI: show \"year overview\" as structured cards not one wall of text"
+  ]
+}

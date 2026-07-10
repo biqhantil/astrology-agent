@@ -14,12 +14,61 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.core.auth import AuthPayload, require_user
 from app.core.deps import get_conn
-from app.schemas.conversation import (
-    ConversationCreate,
-    ConversationResponse,
-    ConversationUpdate,
-)
 
+# ── Domain schemas (colocated) ────────────────────────────────────
+from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+# ── Request ─────────────────────────────────────────────────────
+
+class ConversationCreate(BaseModel):
+    """Create a new conversation for the current user.
+
+    All fields are optional — the API will auto-generate defaults.
+    A ``title`` may be provided by the client for display purposes,
+    otherwise the LLM will generate one from the first user message.
+    """
+
+    chart_context_id: UUID | None = None
+    synastry_context_id: UUID | None = None
+    title: str | None = None
+    model_version: str | None = None
+
+
+class ConversationUpdate(BaseModel):
+    """Partial update of a conversation.
+
+    Supports renaming, status, and binding chart/synastry context
+    (required for natal injection into the agent system prompt).
+    """
+
+    title: str | None = None
+    status: str | None = Field(None, pattern="^(active|archived)$")
+    chart_context_id: UUID | None = None
+    synastry_context_id: UUID | None = None
+
+
+# ── Response ────────────────────────────────────────────────────
+
+class ConversationResponse(BaseModel):
+    """Full conversation returned to the client."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    user_id: UUID
+    chart_context_id: UUID | None = None
+    synastry_context_id: UUID | None = None
+    title: str | None = None
+    status: str = "active"
+    model_version: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+# ── Routes ──────────────────────────────────────────────────────────
 router = APIRouter()
 
 
@@ -199,7 +248,7 @@ async def update_conversation(
     auth: AuthPayload = Depends(require_user),
     conn=Depends(get_conn),
 ) -> ConversationResponse:
-    """Update a conversation's title and/or status.
+    """Update a conversation's title, status, and/or chart context.
 
     Only the owner can update a conversation.
     """
@@ -218,6 +267,27 @@ async def update_conversation(
     if body.status is not None:
         sets.append(f"status = ${idx}")
         params.append(body.status)
+        idx += 1
+
+    if body.chart_context_id is not None:
+        # Verify the chart exists and belongs to this user
+        chart_ok = await conn.fetchval(
+            "SELECT 1 FROM charts WHERE id = $1 AND user_id = $2",
+            body.chart_context_id,
+            user_id,
+        )
+        if not chart_ok:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="chart_context_id not found for this user",
+            )
+        sets.append(f"chart_context_id = ${idx}")
+        params.append(body.chart_context_id)
+        idx += 1
+
+    if body.synastry_context_id is not None:
+        sets.append(f"synastry_context_id = ${idx}")
+        params.append(body.synastry_context_id)
         idx += 1
 
     if not sets:

@@ -1,0 +1,55 @@
+{
+  "iteration": 2,
+  "scenarios": 1,
+  "passed": 1,
+  "failed": 0,
+  "total_tokens": 14964,
+  "total_latency_ms": 40459.58066600724,
+  "results": [
+    {
+      "name": "u1_quick_daily",
+      "ok": true,
+      "passed_turns": 2,
+      "total_turns": 2,
+      "tokens": 14964,
+      "latency_ms": 40459.58066600724,
+      "error": null,
+      "turns": [
+        {
+          "id": "daily",
+          "passed": true,
+          "status": 201,
+          "tools": [
+            "render_transit_timeline"
+          ],
+          "rounds": 2,
+          "prompt_tokens": 6746,
+          "completion_tokens": 1975,
+          "total_tokens": 8721,
+          "reasoning_tokens": 960,
+          "latency_ms": 26485.845960007282,
+          "reply_len": 3593,
+          "error": null,
+          "exception": null,
+          "preview": "☀️ **Your Daily Forecast — July 10, 2026**\n\nGood morning, stargazer. The skies today are unusually rich — there's a beautiful convergence of **light and depth** playing out across your chart. Let me walk you through it.\n\n---\n\n### 🌟 The Big "
+        },
+        {
+          "id": "practical",
+          "passed": true,
+          "status": 201,
+          "tools": [],
+          "rounds": 1,
+          "prompt_tokens": 5413,
+          "completion_tokens": 830,
+          "total_tokens": 6243,
+          "reasoning_tokens": 394,
+          "latency_ms": 13973.73470599996,
+          "reply_len": 1893,
+          "error": null,
+          "exception": null,
+          "preview": "Looking at the tightest and most dynamic aspects today, here's the single most concrete thing I'd flag for you:\n\n---\n\n### 🛑 Avoid: Sending any important message in the heat of the moment\n\nYou have **transiting Mars ☌ your natal Mercury** (e"
+        }
+      ]
+    }
+  ]
+}

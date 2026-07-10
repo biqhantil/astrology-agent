@@ -1,56 +1,73 @@
-/* ── Astrological planet and sign glyphs (SVG text / Unicode fallback) ── */
+/* ── Astrological planet and sign glyphs (SVG text / Unicode) ── */
 
 import type { BodyKey, SignName } from '../types/chart';
 
+/** Force text-style (monochrome) presentation — avoids multicolored emoji glyphs. */
+const VS15 = '\uFE0E';
+
+function mono(char: string): string {
+  return char + VS15;
+}
+
 /**
  * Returns a Unicode glyph symbol for the given celestial body.
- * These are standard astrological Unicode characters.
+ * VS15 keeps symbols monochrome so SVG fill colors apply.
  */
 export function bodyGlyph(body: BodyKey): string {
   const glyphMap: Partial<Record<BodyKey, string>> = {
-    sun: '\u2609',       // ☉
-    moon: '\u263D',      // ☽
-    mercury: '\u263F',   // ☿
-    venus: '\u2640',     // ♀
-    mars: '\u2642',      // ♂
-    jupiter: '\u2643',   // ♃
-    saturn: '\u2644',    // ♄
-    uranus: '\u2645',    // ♅
-    neptune: '\u2646',   // ♆
-    pluto: '\u2647',     // ♇
-    north_node: '\u260A',  // ☊
-    south_node: '\u260B',  // ☋
-    chiron: '\u26B7',    // ⚷
-    asc: 'ASC',
+    sun: mono('\u2609'),
+    moon: mono('\u263D'),
+    mercury: mono('\u263F'),
+    venus: mono('\u2640'),
+    mars: mono('\u2642'),
+    jupiter: mono('\u2643'),
+    saturn: mono('\u2644'),
+    uranus: mono('\u2645'),
+    neptune: mono('\u2646'),
+    pluto: mono('\u2647'),
+    north_node: mono('\u260A'),
+    south_node: mono('\u260B'),
+    chiron: mono('\u26B7'),
+    asc: 'Asc',
     mc: 'MC',
-    dsc: 'DSC',
+    dsc: 'Dsc',
     ic: 'IC',
-    lilith: '\u26B8',    // ⚸
-    part_of_fortune: '\u2297', // ⊗
+    lilith: mono('\u26B8'),
+    part_of_fortune: mono('\u2297'),
   };
   return glyphMap[body] ?? body.slice(0, 2).toUpperCase();
 }
 
 /**
- * Returns a Unicode glyph for the given zodiac sign.
+ * Returns a monochrome Unicode glyph for the given zodiac sign.
  */
 export function signGlyph(sign: SignName): string {
   const glyphMap: Record<SignName, string> = {
-    aries: '\u2648',        // ♈
-    taurus: '\u2649',       // ♉
-    gemini: '\u264A',       // ♊
-    cancer: '\u264B',       // ♋
-    leo: '\u264C',          // ♌
-    virgo: '\u264D',        // ♍
-    libra: '\u264E',        // ♎
-    scorpio: '\u264F',      // ♏
-    sagittarius: '\u2650',  // ♐
-    capricorn: '\u2651',    // ♑
-    aquarius: '\u2652',     // ♒
-    pisces: '\u2653',       // ♓
+    aries: mono('\u2648'),
+    taurus: mono('\u2649'),
+    gemini: mono('\u264A'),
+    cancer: mono('\u264B'),
+    leo: mono('\u264C'),
+    virgo: mono('\u264D'),
+    libra: mono('\u264E'),
+    scorpio: mono('\u264F'),
+    sagittarius: mono('\u2650'),
+    capricorn: mono('\u2651'),
+    aquarius: mono('\u2652'),
+    pisces: mono('\u2653'),
   };
   return glyphMap[sign] ?? sign.slice(0, 3).toUpperCase();
 }
+
+/** Angle bodies rendered on the outer ring, not stacked with planets. */
+export const ANGLE_BODIES = new Set<BodyKey>(['asc', 'mc', 'dsc', 'ic']);
+
+/** Prefer these for the main planet band (cleaner wheel). */
+export const CORE_PLANET_BODIES = new Set<BodyKey>([
+  'sun', 'moon', 'mercury', 'venus', 'mars',
+  'jupiter', 'saturn', 'uranus', 'neptune', 'pluto',
+  'north_node', 'south_node', 'chiron', 'lilith', 'part_of_fortune',
+]);
 
 /**
  * Human-readable label for a body key.

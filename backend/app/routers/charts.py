@@ -15,16 +15,164 @@ from app.astro_engine import compute_chart
 from app.core.auth import AuthPayload, require_user
 from app.core.deps import get_conn
 from app.database import DatabasePool
-from app.schemas.chart import (
-    ChartAspectResponse,
-    ChartBodyResponse,
-    ChartCreate,
-    ChartHouseResponse,
-    ChartResponse,
-    ChartSummaryResponse,
-)
 
+# ── Domain schemas (colocated) ────────────────────────────────────
+from datetime import date, datetime
+from decimal import Decimal
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field, computed_field
+
+
+# ======================================================================
+# Request schemas
+# ======================================================================
+
+class ChartLocation(BaseModel):
+    """Location data for chart calculation."""
+
+    latitude: Decimal = Field(..., ge=-90, le=90, decimal_places=6)
+    longitude: Decimal = Field(..., ge=-180, le=180, decimal_places=6)
+    time_zone: str
+    location_name: str | None = None
+
+
+class ChartOptions(BaseModel):
+    """Optional parameters for chart calculation."""
+
+    bodies: list[str] | None = None
+    aspects: list[str] | None = None
+    orb_major: float = 8.0
+    orb_minor: float = 2.0
+    include_minor_aspects: bool = True
+
+
+class ChartCreate(BaseModel):
+    """Request body for ``POST /v1/charts``."""
+
+    chart_type: str = Field(
+        ...,
+        pattern="^(natal|transit|progressed|solar_return|synastry_composite|event)$",
+    )
+    reference_chart_id: UUID | None = None
+    calculation_date: datetime
+    location: ChartLocation
+    house_system: str = Field(default="P", pattern="^[PWKERCV]$")
+    options: ChartOptions | None = None
+
+
+# ======================================================================
+# Response schemas
+# ======================================================================
+
+class ChartBodyResponse(BaseModel):
+    """A single celestial body in a chart."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    body_key: str
+    longitude: Decimal
+    sign: str
+    sign_degree: Decimal
+    house: int | None = None
+    speed: Decimal
+    is_retrograde: bool
+    dignity: str | None = None
+
+
+class ChartHouseResponse(BaseModel):
+    """A single house cusp in a chart."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    house_number: int
+    cusps_longitude: Decimal
+    sign: str
+    sign_degree: Decimal
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def degree(self) -> float:
+        """Alias for ``sign_degree`` for clients/scenarios."""
+        return float(self.sign_degree)
+
+
+class ChartAspectResponse(BaseModel):
+    """A single aspect between two bodies in a chart."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    body_a_key: str
+    body_b_key: str
+    aspect_type: str
+    orb: Decimal
+    is_applying: bool | None = None
+    is_major: bool
+
+
+class ChartResponse(BaseModel):
+    """Full chart response matching ``GET /v1/charts/:id``."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    chart_type: str
+    user_id: UUID
+    calculation_date: datetime
+    house_system: str
+    latitude: Decimal
+    longitude: Decimal
+    time_zone: str
+    location_name: str | None = None
+    title: str | None = None
+    bodies: list[ChartBodyResponse] = []
+    houses: list[ChartHouseResponse] = []
+    aspects: list[ChartAspectResponse] = []
+    metadata: dict = {}
+    created_at: datetime
+
+
+class ChartSummaryResponse(BaseModel):
+    """Lightweight chart summary (signs, key aspects)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    chart_type: str
+    calculation_date: datetime
+    sun: ChartBodyResponse | None = None
+    moon: ChartBodyResponse | None = None
+    rising: ChartBodyResponse | None = None
+    key_aspects: list[ChartAspectResponse] = []
+
+# ── Routes ──────────────────────────────────────────────────────────
 router = APIRouter()
+
+
+# ======================================================================
+# GET /v1/charts  (list current user's charts)
+# ======================================================================
+
+
+@router.get("", response_model=list[ChartResponse])
+async def list_charts(
+    auth: AuthPayload = Depends(require_user),
+    conn: DatabasePool = Depends(get_conn),
+) -> list[ChartResponse]:
+    """List charts owned by the authenticated user (most recent first)."""
+    user_id = UUID(auth["sub"])
+    rows = await conn.fetch(
+        """
+        SELECT id FROM charts
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+        """,
+        user_id,
+    )
+    results: list[ChartResponse] = []
+    for row in rows:
+        results.append(await _fetch_chart_response(conn, row["id"], owner_id=user_id))
+    return results
 
 
 # ======================================================================
@@ -184,8 +332,8 @@ async def get_chart(
     auth: AuthPayload = Depends(require_user),
     conn: DatabasePool = Depends(get_conn),
 ) -> ChartResponse:
-    """Retrieve a full chart with bodies, houses, and aspects."""
-    return await _fetch_chart_response(conn, chart_id)
+    """Retrieve a full chart with bodies, houses, and aspects (owner only)."""
+    return await _fetch_chart_response(conn, chart_id, owner_id=UUID(auth["sub"]))
 
 
 # ======================================================================
@@ -200,7 +348,7 @@ async def get_chart_summary(
     conn: DatabasePool = Depends(get_conn),
 ) -> ChartSummaryResponse:
     """Retrieve a lightweight chart summary (sun, moon, rising, key aspects)."""
-    chart = await _fetch_chart_response(conn, chart_id)
+    chart = await _fetch_chart_response(conn, chart_id, owner_id=UUID(auth["sub"]))
 
     sun = next((b for b in chart.bodies if b.body_key == "sun"), None)
     moon = next((b for b in chart.bodies if b.body_key == "moon"), None)
@@ -226,8 +374,13 @@ async def get_chart_summary(
 async def _fetch_chart_response(
     conn: DatabasePool,
     chart_id: UUID,
+    owner_id: UUID | None = None,
 ) -> ChartResponse:
-    """Fetch a chart and all its related data, returning a ChartResponse."""
+    """Fetch a chart and all its related data, returning a ChartResponse.
+
+    If ``owner_id`` is set, returns 404 when the chart belongs to another user
+    (avoids leaking existence across tenants).
+    """
     # Fetch chart
     chart_row = await conn.fetchrow(
         """
@@ -239,6 +392,11 @@ async def _fetch_chart_response(
         chart_id,
     )
     if chart_row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chart not found",
+        )
+    if owner_id is not None and str(chart_row["user_id"]) != str(owner_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Chart not found",

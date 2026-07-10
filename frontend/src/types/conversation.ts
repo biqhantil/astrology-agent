@@ -25,3 +25,8 @@ export interface Conversation {
   created_at: string;
   updated_at: string;
 }
+
+export interface SendMessageResponse {
+  user_message: Message;
+  assistant_message: Message;
+}

@@ -1,109 +1,133 @@
-/* ── Chart Details Panel (planet list, aspect table) ─── */
+/* ── Chart Details — two columns: Natal | Aspects ── */
 
 import type { FC } from 'react';
 import type { ChartPayload } from '../../types/chart';
-import { bodyLabel, signLabel } from '../../utils/glyphs';
+import { bodyGlyph } from '../../utils/glyphs';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface ChartDetailPanelProps {
-  chart: ChartPayload;
+  natalChart: ChartPayload;
+  aspectChart?: ChartPayload | null;
+  aspectTitle?: string;
 }
 
-/**
- * Shows a structured list of all chart bodies and their placements.
- * Used as a detail sidebar/below the ZodiacWheel.
- */
-const ChartDetailPanel: FC<ChartDetailPanelProps> = ({ chart }) => {
-  if (!chart.bodies.length) {
-    return (
-      <div className="p-4 text-center text-gray-500 text-sm">
-        No chart data available.
-      </div>
-    );
+const DIGNITY_STYLE: Record<string, string> = {
+  domicile: 'text-emerald-400',
+  exaltation: 'text-sky-400',
+  detriment: 'text-red-400',
+  fall: 'text-orange-400',
+  peregrine: 'text-zinc-500',
+};
+
+const ChartDetailPanel: FC<ChartDetailPanelProps> = ({
+  natalChart,
+  aspectChart,
+  aspectTitle,
+}) => {
+  const { t } = useI18n();
+  const aspectsSource = aspectChart ?? natalChart;
+  const majorAspects = aspectsSource.aspects.filter((a) => a.is_major).slice(0, 24);
+  const title = aspectTitle ?? t('chart.natalAspects');
+
+  const bodyName = (key: string) => t(`body.${key}`);
+  const signName = (sign: string) => t(`sign.${sign}`);
+  const digShort = (d: string | null | undefined) =>
+    d ? t(`dignity.${d}`) : '';
+
+  if (!natalChart.bodies.length) {
+    return <div className="p-4 text-zinc-500 text-sm">{t('common.noChartData')}</div>;
   }
 
   return (
-    <div className="p-3 space-y-3">
-      {/* Planet placement list */}
-      <div>
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-          Planetary Positions
-        </h3>
-        <div className="space-y-1">
-          {chart.bodies.map((body) => (
-            <div
-              key={body.body_key}
-              className="flex items-center justify-between text-sm py-0.5 px-2 rounded hover:bg-surface-light transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-gray-200 w-20">
-                  {bodyLabel(body.body_key)}
-                </span>
-                <span className="text-accent-light font-mono text-xs">
-                  {body.is_retrograde ? '℞ ' : ''}
-                  {signLabel(body.sign)} {body.sign_degree.toFixed(1)}°
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                {body.house && <span>H{body.house}</span>}
-                {body.dignity && (
-                  <span
-                    className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                      body.dignity === 'domicile'
-                        ? 'bg-green-500/10 text-green-400'
-                        : body.dignity === 'exaltation'
-                          ? 'bg-blue-500/10 text-blue-400'
-                          : body.dignity === 'detriment'
-                            ? 'bg-red-500/10 text-red-400'
-                            : body.dignity === 'fall'
-                              ? 'bg-orange-500/10 text-orange-400'
-                              : 'bg-gray-500/10 text-gray-400'
-                    }`}
-                  >
-                    {body.dignity}
-                  </span>
-                )}
-              </div>
+    <div className="h-full flex flex-col bg-black text-[#f5f0e6]">
+      <div className="flex-1 min-h-0 flex divide-x divide-amber-500/15">
+        <section className="flex-1 min-w-0 flex flex-col">
+          <header className="shrink-0 px-2.5 py-2.5 border-b border-amber-500/20">
+            <div className="text-[10px] tracking-[0.28em] uppercase text-amber-400 font-semibold">
+              {t('chart.natal')}
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Aspect table (compact) */}
-      {chart.aspects.length > 0 && (
-        <div>
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-            Aspects
-          </h3>
-          <div className="space-y-1">
-            {chart.aspects
-              .filter((a) => a.is_major)
-              .map((aspect, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between text-sm py-0.5 px-2 rounded hover:bg-surface-light transition-colors"
+            <div className="text-[11px] text-zinc-500 mt-0.5 truncate">
+              {natalChart.location_name ?? t('chart.birthChart')}
+            </div>
+          </header>
+          <div className="flex-1 min-h-0 overflow-y-auto px-1.5 py-1.5 space-y-0.5">
+            {natalChart.bodies.map((body) => (
+              <div
+                key={body.body_key}
+                className="grid grid-cols-[1.5rem_minmax(0,1fr)_1.75rem] items-center gap-x-1.5 py-1.5 px-1 rounded hover:bg-zinc-900/70"
+              >
+                <span
+                  className="text-center text-base leading-none text-amber-300"
+                  title={bodyName(body.body_key)}
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-200">
-                      {bodyLabel(aspect.body_a_key)}
-                    </span>
-                    <span className="text-gray-500 text-xs">{aspect.aspect_type}</span>
-                    <span className="text-gray-200">
-                      {bodyLabel(aspect.body_b_key)}
-                    </span>
+                  {bodyGlyph(body.body_key)}
+                </span>
+                <div className="min-w-0 overflow-hidden">
+                  <div className="text-[12px] font-semibold text-[#f5f0e6] truncate leading-tight">
+                    {bodyName(body.body_key)}
                   </div>
-                  <span className="text-xs text-gray-500 font-mono">
-                    orb {aspect.orb.toFixed(1)}°
-                    {aspect.is_applying !== null && (
-                      <span className="ml-1">
-                        {aspect.is_applying ? '(app)' : '(sep)'}
-                      </span>
+                  <div className="text-[11px] text-zinc-400 font-mono truncate leading-tight mt-0.5">
+                    {body.is_retrograde && <span className="text-red-400 mr-0.5">℞</span>}
+                    <span className="text-amber-200/90">{signName(body.sign)}</span>
+                    {' '}
+                    {body.sign_degree.toFixed(1)}°
+                    {body.house != null && (
+                      <span className="text-zinc-600 ml-1">H{body.house}</span>
                     )}
+                  </div>
+                </div>
+                <span
+                  className={`text-[9px] font-semibold uppercase tracking-wide text-right ${
+                    DIGNITY_STYLE[body.dignity ?? ''] ?? 'text-zinc-600'
+                  }`}
+                  title={body.dignity ?? undefined}
+                >
+                  {digShort(body.dignity)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="flex-1 min-w-0 flex flex-col">
+          <header className="shrink-0 px-2.5 py-2.5 border-b border-amber-500/20">
+            <div className="text-[10px] tracking-[0.28em] uppercase text-amber-400 font-semibold">
+              {title}
+            </div>
+            <div className="text-[11px] text-zinc-500 mt-0.5 truncate">
+              {majorAspects.length} {t('common.major')}
+            </div>
+          </header>
+          <div className="flex-1 min-h-0 overflow-y-auto px-1.5 py-1.5 space-y-0.5">
+            {majorAspects.length === 0 ? (
+              <p className="text-zinc-600 text-xs px-1 py-2">{t('common.noMajorAspects')}</p>
+            ) : (
+              majorAspects.map((a, i) => (
+                <div
+                  key={i}
+                  className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_2rem] items-center gap-x-0.5 px-1 py-1.5 text-[11px] rounded hover:bg-zinc-900/70"
+                >
+                  <span className="font-medium text-zinc-200 truncate text-right">
+                    {bodyName(a.body_a_key)}
+                  </span>
+                  <span
+                    className="text-amber-500/90 text-[9px] uppercase tracking-wide px-0.5 shrink-0"
+                    title={a.aspect_type}
+                  >
+                    {a.aspect_type.slice(0, 4)}
+                  </span>
+                  <span className="font-medium text-zinc-200 truncate">
+                    {bodyName(a.body_b_key)}
+                  </span>
+                  <span className="text-[10px] text-zinc-500 font-mono text-right tabular-nums">
+                    {a.orb.toFixed(1)}°
                   </span>
                 </div>
-              ))}
+              ))
+            )}
           </div>
-        </div>
-      )}
+        </section>
+      </div>
     </div>
   );
 };

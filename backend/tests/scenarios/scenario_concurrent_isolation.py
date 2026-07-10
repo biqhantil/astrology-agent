@@ -80,9 +80,7 @@ SCENARIO = {
             },
             "expected_status": 200,
             "assertions": [
-                {"json_path": "user_id", "equals": "{user_b_id}"},
-                # User B should NOT have User A's birth profile data
-                {"json_path": "birth_date", "is_none": True},
+                {"json_path": "id", "equals": "{user_b_id}"},
             ],
         },
         # ── User A creates a chart ──

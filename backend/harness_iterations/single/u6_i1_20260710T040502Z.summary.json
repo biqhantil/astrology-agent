@@ -1,0 +1,137 @@
+{
+  "iteration": 1,
+  "scenarios": 1,
+  "passed": 1,
+  "failed": 0,
+  "total_tokens": 62066,
+  "total_latency_ms": 86737.51660404378,
+  "results": [
+    {
+      "name": "u6_ceiling_probe",
+      "ok": true,
+      "passed_turns": 7,
+      "total_turns": 7,
+      "tokens": 62066,
+      "latency_ms": 86737.51660404378,
+      "error": null,
+      "turns": [
+        {
+          "id": "phase",
+          "passed": true,
+          "status": 201,
+          "tools": [
+            "render_life_phases"
+          ],
+          "rounds": 2,
+          "prompt_tokens": 5964,
+          "completion_tokens": 1209,
+          "total_tokens": 7173,
+          "reasoning_tokens": 608,
+          "latency_ms": 15735.073085001204,
+          "reply_len": 2497,
+          "error": null,
+          "exception": null,
+          "preview": "## Your Current Life Phase & Saturn Return Timing\n\nBorn **March 21, 1985**, you are currently 41 years old — and right at the threshold of major transitions.\n\n---\n\n### 🔹 You Are in the **Expansion & Growth** Phase\n*(2017–2027)*\n\nThis phase "
+        },
+        {
+          "id": "year",
+          "passed": true,
+          "status": 201,
+          "tools": [
+            "render_transit_timeline"
+          ],
+          "rounds": 2,
+          "prompt_tokens": 10688,
+          "completion_tokens": 3332,
+          "total_tokens": 14020,
+          "reasoning_tokens": 2216,
+          "latency_ms": 38438.447637017816,
+          "reply_len": 3822,
+          "error": null,
+          "exception": null,
+          "preview": "The transit data for today shows a dense map of activity, and when I layer that with the planets' movements across the full year, **three powerful transit seasons** stand out:\n\n---\n\n## ① Uranus conjunct Ascendant — *Identity Revolution*\n**("
+        },
+        {
+          "id": "synastry_fail",
+          "passed": true,
+          "status": 201,
+          "tools": [],
+          "rounds": 1,
+          "prompt_tokens": 7438,
+          "completion_tokens": 527,
+          "total_tokens": 7965,
+          "reasoning_tokens": 434,
+          "latency_ms": 6085.007005021907,
+          "reply_len": 411,
+          "error": null,
+          "exception": null,
+          "preview": "I'm glad to run the synastry, but I need your partner's chart to compare it with yours. The synastry tool requires a **chart ID** for the other person.\n\nDo you have your partner's **birth date, time, and place** handy? Once I have those, I "
+        },
+        {
+          "id": "memory",
+          "passed": true,
+          "status": 201,
+          "tools": [],
+          "rounds": 1,
+          "prompt_tokens": 7550,
+          "completion_tokens": 184,
+          "total_tokens": 7734,
+          "reasoning_tokens": 96,
+          "latency_ms": 3487.202577001881,
+          "reply_len": 371,
+          "error": null,
+          "exception": null,
+          "preview": "From our earlier conversation — you're in the **Expansion & Growth** phase, which runs from **2017 to 2027**, wrapping up right about now. It's the chapter where the lessons of your First Saturn Return get applied and your horizons broaden."
+        },
+        {
+          "id": "pt_switch",
+          "passed": true,
+          "status": 201,
+          "tools": [],
+          "rounds": 1,
+          "prompt_tokens": 7674,
+          "completion_tokens": 575,
+          "total_tokens": 8249,
+          "reasoning_tokens": 311,
+          "latency_ms": 7956.66707502096,
+          "reply_len": 929,
+          "error": null,
+          "exception": null,
+          "preview": "Nos próximos 3 meses (julho a outubro de 2026), três movimentos pedem sua atenção:\n\n1. **Urano conjunto ao Ascendente** — sua identidade e apresentação pessoal passam por uma sacudida elétrica. Mudanças rápidas de visual, estilo de vida ou "
+        },
+        {
+          "id": "practices",
+          "passed": true,
+          "status": 201,
+          "tools": [],
+          "rounds": 1,
+          "prompt_tokens": 7931,
+          "completion_tokens": 215,
+          "total_tokens": 8146,
+          "reasoning_tokens": 50,
+          "latency_ms": 4986.079188995063,
+          "reply_len": 664,
+          "error": null,
+          "exception": null,
+          "preview": "**Uranus ☌ Asc** — Each Monday, change one tiny thing about your routine or appearance. A different route to work, a new accessory, a sentence you'd never say. Let the small disruption crack the shell.\n\n**Saturn through your 12th House Arie"
+        },
+        {
+          "id": "edge",
+          "passed": true,
+          "status": 201,
+          "tools": [],
+          "rounds": 1,
+          "prompt_tokens": 8122,
+          "completion_tokens": 657,
+          "total_tokens": 8779,
+          "reasoning_tokens": 445,
+          "latency_ms": 10049.040035984945,
+          "reply_len": 907,
+          "error": null,
+          "exception": null,
+          "preview": "Love for you right now sits at the intersection of two big signatures:\n\n**Natal Venus in Aries (12th house) conjunct Lilith** — you love fiercely, privately, and on your own terms. There's a raw, almost taboo magnetism to your style; you're"
+        }
+      ]
+    }
+  ]
+}

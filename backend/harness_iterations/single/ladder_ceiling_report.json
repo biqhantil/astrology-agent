@@ -1,0 +1,98 @@
+{
+  "title": "Complexity/length ladder ceiling",
+  "method": "one scenario at a time in tmux 0:2.5, poll ~30s, UX analysis",
+  "ladder": [
+    {
+      "id": "u1_quick_daily",
+      "turns": 2,
+      "tok": 14964,
+      "lat_s": 40,
+      "ok": true,
+      "product": "Sweet spot \u2014 Di\u00e1rio daily + practical"
+    },
+    {
+      "id": "u2_natal_deep",
+      "turns": 3,
+      "tok": 21589,
+      "lat_s": 94,
+      "ok": true,
+      "product": "Found EN\u2192PT language bug; fixed with language lock"
+    },
+    {
+      "id": "u3_ptbr_recovery",
+      "turns": 4,
+      "tok": 31627,
+      "lat_s": 86,
+      "ok": true,
+      "product": "pt-BR solid; genericity requires user pushback"
+    },
+    {
+      "id": "u4_tool_chain",
+      "turns": 5,
+      "tok": 33776,
+      "lat_s": 57,
+      "ok": true,
+      "product": "Best multi-turn pattern: inject natal, one transit, short memory"
+    },
+    {
+      "id": "u5_life_phase_long",
+      "turns": 4,
+      "tok": 54447,
+      "lat_s": 101,
+      "ok": true,
+      "product": "SOFT cost ceiling opens: year ~21k tok"
+    },
+    {
+      "id": "u6_ceiling_probe",
+      "turns": 7,
+      "tok": 62066,
+      "lat_s": 87,
+      "ok": true,
+      "product": "Recovery+lang switch OK; ~8k tok even for tool-free turns"
+    },
+    {
+      "id": "u7_extreme_ceiling",
+      "turns": 6,
+      "tok": 80521,
+      "lat_s": 109,
+      "ok": true,
+      "product": "COST+FIDELITY ceiling: double transit windows, invented exact dates"
+    }
+  ],
+  "ceilings": {
+    "hard_fail": "Not reached at 7 turns / 80k tokens \u2014 assertions still pass",
+    "cost": {
+      "where": "12-month and 90-day transit tool turns",
+      "signal": "14\u201321k tokens and 33\u201338s per turn",
+      "stacked": "u7 total 80k / 109s"
+    },
+    "latency_ux": {
+      "where": "any outer-planet / multi-month transit compute",
+      "signal": ">30s wait before first token (chat feels broken)"
+    },
+    "fidelity": {
+      "where": "year and 90d asks",
+      "signal": "model admits tool is near-term snapshot then invents seasons/exact dates",
+      "risk": "product may present approximate dates as if computed"
+    },
+    "context_bloat": {
+      "where": "turn 5+ after heavy tools",
+      "signal": "one-word answer costs ~12.8k tokens (almost all prompt)"
+    },
+    "reply_length": {
+      "where": "natal deep-dives and emotion",
+      "signal": "5\u20136k char walls; mobile Di\u00e1rio hard to scan"
+    }
+  },
+  "product_recommendations": [
+    "Default Di\u00e1rio flows stay in u1\u2013u4 envelope (daily + short follow-ups)",
+    "Year views: dedicated UI with precomputed seasons; do not raw-dump 30 aspects into chat",
+    "Transit tool: return seasonal summaries for windows >30d; never invent exact dates without ephemeris",
+    "Streaming + skeleton UI for any tool path expected >8s",
+    "History compaction after tool-heavy turns (drop raw tool JSON from later prompts)",
+    "Keep language lock; lead with one concrete chart fact before prose",
+    "Synastry empty-state (ask partner chart) already good UX \u2014 keep"
+  ],
+  "sweet_spot": "2\u20135 turns, \u22641 transit tool, \u226435k tokens, \u226460s total \u2014 u1/u4 pattern",
+  "ceiling_call": "Product ceiling is at multi-month transit + long thread (u5\u2013u7), not hard crash. Ship for short/medium; redesign year path before marketing year-ahead chat."
+}

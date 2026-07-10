@@ -1,6 +1,7 @@
 /* ── Preset prompt chips for quick questions ─────────── */
 
-import type { FC } from 'react';
+import { useMemo, type FC } from 'react';
+import { useI18n } from '../../i18n/I18nContext';
 
 export interface PresetChip {
   id: string;
@@ -9,63 +10,61 @@ export interface PresetChip {
   icon?: string;
 }
 
-const defaultPresets: PresetChip[] = [
-  {
-    id: 'daily',
-    label: 'Daily',
-    prompt: 'What do the stars say about today? Give me a daily astrological forecast.',
-    icon: '☀️',
-  },
-  {
-    id: 'weekly',
-    label: 'Weekly',
-    prompt: 'Give me a weekly astrological forecast for this week.',
-    icon: '📅',
-  },
-  {
-    id: 'my-chart',
-    label: 'My Chart',
-    prompt: 'Show me my natal chart and explain the main placements.',
-    icon: '♄',
-  },
-  {
-    id: 'saturn-return',
-    label: 'Saturn Return',
-    prompt: 'Tell me about my Saturn return. When is it and what does it mean?',
-    icon: '⏳',
-  },
-  {
-    id: 'transits',
-    label: 'Current Transits',
-    prompt: 'What are the current transits affecting my chart?',
-    icon: '🪐',
-  },
-  {
-    id: 'year-ahead',
-    label: 'Year Ahead',
-    prompt: 'Give me a year-ahead forecast based on my chart.',
-    icon: '🌟',
-  },
-];
-
 interface PresetPromptChipsProps {
-  /** Optional custom preset list */
   presets?: PresetChip[];
-  /** Called when a chip is clicked — receives the full prompt text */
   onSelect: (prompt: string) => void;
-  /** If true, chips are disabled (e.g., during streaming) */
   disabled?: boolean;
 }
 
-/**
- * Horizontal scrollable row of preset prompt chips.
- * Users tap a chip to instantly send that prompt to the astrologer.
- */
 const PresetPromptChips: FC<PresetPromptChipsProps> = ({
-  presets = defaultPresets,
+  presets: customPresets,
   onSelect,
   disabled = false,
 }) => {
+  const { t } = useI18n();
+
+  const presets = useMemo(() => {
+    if (customPresets) return customPresets;
+    return [
+      {
+        id: 'daily',
+        label: t('presets.daily'),
+        prompt: t('presets.dailyPrompt'),
+        icon: '☀️',
+      },
+      {
+        id: 'weekly',
+        label: t('presets.weekly'),
+        prompt: t('presets.weeklyPrompt'),
+        icon: '📅',
+      },
+      {
+        id: 'my-chart',
+        label: t('presets.myChart'),
+        prompt: t('presets.myChartPrompt'),
+        icon: '♄',
+      },
+      {
+        id: 'saturn-return',
+        label: t('presets.saturnReturn'),
+        prompt: t('presets.saturnReturnPrompt'),
+        icon: '⏳',
+      },
+      {
+        id: 'transits',
+        label: t('presets.transits'),
+        prompt: t('presets.transitsPrompt'),
+        icon: '🪐',
+      },
+      {
+        id: 'year-ahead',
+        label: t('presets.yearAhead'),
+        prompt: t('presets.yearAheadPrompt'),
+        icon: '🌟',
+      },
+    ];
+  }, [customPresets, t]);
+
   if (presets.length === 0) return null;
 
   return (
@@ -86,5 +85,4 @@ const PresetPromptChips: FC<PresetPromptChipsProps> = ({
   );
 };
 
-export { defaultPresets };
 export default PresetPromptChips;

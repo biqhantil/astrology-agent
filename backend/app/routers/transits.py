@@ -17,13 +17,77 @@ from app.astro_engine.transit import TransitCalculator
 from app.core.auth import AuthPayload, require_user
 from app.core.deps import get_conn
 from app.database import DatabasePool
-from app.schemas.transit import (
-    TransitEvent,
-    TransitRequest,
-    TransitSnapshotResponse,
-    TransitSummaryResponse,
-)
 
+# ── Domain schemas (colocated) ────────────────────────────────────
+from datetime import date, datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+# ======================================================================
+# Request schemas
+# ======================================================================
+
+
+class TransitRequest(BaseModel):
+    """Request body for ``POST /v1/charts/{id}/transits``."""
+
+    start_date: date | None = None
+    end_date: date | None = None
+    bodies: list[str] | None = None
+
+
+# ======================================================================
+# Response schemas
+# ======================================================================
+
+
+class TransitEvent(BaseModel):
+    """A single transit event — a transiting planet aspecting a natal body."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    date: date
+    transiting_body: str
+    natal_body: str
+    aspect_type: str
+    orb: float
+    is_applying: bool | None = None
+    transit_house: int | None = None
+    natal_house: int | None = None
+
+
+class TransitSnapshotResponse(BaseModel):
+    """Response for a set of computed transits."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    natal_chart_id: UUID
+    date_from: date
+    date_to: date
+    transit_events: list[TransitEvent]
+    created_at: datetime
+    expires_at: datetime
+
+
+class TransitSummaryResponse(BaseModel):
+    """Lightweight summary of important transits (major aspects only)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    natal_chart_id: UUID
+    date_from: date
+    date_to: date
+    total_events: int
+    major_events: list[TransitEvent]
+    slow_planets: list[TransitEvent] = Field(
+        default_factory=list,
+        description="Transits involving Jupiter, Saturn, Uranus, Neptune, Pluto",
+    )
+
+# ── Routes ──────────────────────────────────────────────────────────
 router = APIRouter()
 
 # Transit cache TTL (transit snapshots expire after this duration)
@@ -50,6 +114,18 @@ async def create_transits(
     """
     user_id = UUID(auth["sub"])
 
+    # --- Validate date range first (independent of chart existence) ---
+    today = date.today()
+    start_date = body.start_date or today
+    end_date = body.end_date or (today + timedelta(days=30))
+    transit_bodies = body.bodies
+
+    if start_date > end_date:
+        raise HTTPException(
+            status_code=422,
+            detail="start_date must be before or equal to end_date",
+        )
+
     # --- Fetch the natal chart ---
     chart_row = await conn.fetchrow(
         """
@@ -62,9 +138,6 @@ async def create_transits(
     )
     if chart_row is None:
         raise HTTPException(status_code=404, detail="Chart not found")
-
-    # Only natal charts can be used as transit base
-    # (but we accept any chart type for flexibility)
 
     # --- Fetch natal bodies and houses ---
     natal_bodies = await conn.fetch(
@@ -87,18 +160,6 @@ async def create_transits(
         """,
         chart_id,
     )
-
-    # --- Parse inputs ---
-    today = date.today()
-    start_date = body.start_date or today
-    end_date = body.end_date or (today + timedelta(days=30))
-    transit_bodies = body.bodies
-
-    if start_date > end_date:
-        raise HTTPException(
-            status_code=422,
-            detail="start_date must be before or equal to end_date",
-        )
 
     # --- Run transit calculator ---
     calc = TransitCalculator()

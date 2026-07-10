@@ -1,17 +1,20 @@
-/* ── SSE React Context ───────────────────────────────── */
+/* ── SSE React Context — thin binding over chat/session transport ── */
 
-import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from 'react';
-import { connectSSE, type SSECallback } from '../api/sse';
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+  type ReactNode,
+} from 'react';
+import { connectSSE, type SSECallback } from '../chat/session';
 import type { SSEEventPayload } from '../types/events';
 
 interface SSEContextValue {
-  /** Whether the SSE connection is active */
   isConnected: boolean;
-  /** The most recent SSE event */
   lastEvent: SSEEventPayload | null;
-  /** Connect to an SSE stream for a conversation */
   connect: (conversationId: string) => void;
-  /** Disconnect from the current SSE stream */
   disconnect: () => void;
 }
 
@@ -19,7 +22,6 @@ const SSEContext = createContext<SSEContextValue | null>(null);
 
 interface SSEProviderProps {
   children: ReactNode;
-  /** Global event handler called for every SSE event */
   onEvent?: (event: SSEEventPayload) => void;
 }
 
@@ -38,9 +40,7 @@ export function SSEProvider({ children, onEvent: globalOnEvent }: SSEProviderPro
 
   const connect = useCallback(
     (conversationId: string) => {
-      // Close existing connection
       disconnectRef.current?.();
-
       const close = connectSSE(conversationId, handleEvent, setIsConnected);
       disconnectRef.current = close;
     },

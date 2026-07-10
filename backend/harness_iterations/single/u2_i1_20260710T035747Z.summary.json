@@ -1,0 +1,71 @@
+{
+  "iteration": 1,
+  "scenarios": 1,
+  "passed": 1,
+  "failed": 0,
+  "total_tokens": 21589,
+  "total_latency_ms": 93809.78857001173,
+  "results": [
+    {
+      "name": "u2_natal_deep",
+      "ok": true,
+      "passed_turns": 3,
+      "total_turns": 3,
+      "tokens": 21589,
+      "latency_ms": 93809.78857001173,
+      "error": null,
+      "turns": [
+        {
+          "id": "overview",
+          "passed": true,
+          "status": 201,
+          "tools": [
+            "render_life_phases"
+          ],
+          "rounds": 2,
+          "prompt_tokens": 4673,
+          "completion_tokens": 2881,
+          "total_tokens": 7554,
+          "reasoning_tokens": 1219,
+          "latency_ms": 33364.30459501571,
+          "reply_len": 5109,
+          "error": null,
+          "exception": null,
+          "preview": "Aqui está a leitura completa do seu mapa natal — e que mapa extraordinário! 🌌 Os dados já estavam carregados, então mergulhei direto nas posições, dignidades e aspectos.\n\n---\n\n## ⚡ Visão Geral — Ascendente Gêmeos\n\nVocê tem **Ascendente em G"
+        },
+        {
+          "id": "moon",
+          "passed": true,
+          "status": 201,
+          "tools": [],
+          "rounds": 1,
+          "prompt_tokens": 3918,
+          "completion_tokens": 2483,
+          "total_tokens": 6401,
+          "reasoning_tokens": 888,
+          "latency_ms": 32498.59471200034,
+          "reply_len": 5335,
+          "error": null,
+          "exception": null,
+          "preview": "Vamos mergulhar fundo na sua **Lua** — ela é uma das joias mais complexas e bonitas do seu mapa. 🌊\n\n---\n\n## 🌙 Lua em Peixes a 28.96° | Casa 11 | Peregrina\n\n### O Signo: Peixes — Oceano sem Margens\n\nA Lua em Peixes é como viver com a **pele "
+        },
+        {
+          "id": "career",
+          "passed": true,
+          "status": 201,
+          "tools": [],
+          "rounds": 1,
+          "prompt_tokens": 5538,
+          "completion_tokens": 2096,
+          "total_tokens": 7634,
+          "reasoning_tokens": 279,
+          "latency_ms": 27946.889262995683,
+          "reply_len": 6111,
+          "error": null,
+          "exception": null,
+          "preview": "Maravilha — sua vocação é um dos pontos mais fascinantes do seu mapa. Vamos dissecar cada peça. 🔮\n\n---\n\n## 🏛️ O Teto do Mundo: MC em Aquário (0.22°) + Casa 10\n\nO **MC (Meio do Céu)** é o ponto mais alto do mapa — sua **vocação pública, repu"
+        }
+      ]
+    }
+  ]
+}

@@ -10,8 +10,8 @@ Public entry point: ``compute_chart()`` — runs the full pipeline:
 Modules:
   - ephemeris.py   Swiss Ephemeris wrapper (positions, houses)
   - aspects.py     Aspect detection engine
-  - dignity.py     Essential dignity lookup tables
-  - serializers.py DB serialization helpers
+  - serializers.py DB serialization + essential dignity
+  - transit.py / synastry.py / life_phases.py — domain calculators
 """
 
 from __future__ import annotations

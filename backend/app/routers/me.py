@@ -9,7 +9,35 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.core.auth import AuthPayload, require_user
 from app.core.deps import get_conn
-from app.schemas.user import UserPublic, UserUpdate
+
+# ── Domain schemas (colocated) ────────────────────────────────────
+from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
+
+# ── GET /v1/me → response ───────────────────────────────────────
+
+class UserPublic(BaseModel):
+    """Public view of a user returned to the client."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    email: str | None = None
+    display_name: str | None = None
+    locale: str = "en"
+    created_at: datetime
+    last_active_at: datetime
+
+
+class UserUpdate(BaseModel):
+    """Fields a user may update about themselves."""
+
+    display_name: str | None = None
+    locale: str | None = None
+
+# ── Routes ──────────────────────────────────────────────────────────
 
 router = APIRouter()
 

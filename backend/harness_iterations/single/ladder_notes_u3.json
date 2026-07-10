@@ -1,0 +1,21 @@
+{
+  "step": "u3_ptbr_recovery",
+  "pass": true,
+  "tokens": 31627,
+  "latency_ms": 86098.31662103534,
+  "ux_wins": [
+    "pt-BR language lock works (greet/vague/daily/pushback all Portuguese)",
+    "Greet stays light, no unnecessary tools",
+    "Vague correctly pulls transits once; daily reuses (no second transit tool)",
+    "Pushback recovers with concrete planet/sign/house citations"
+  ],
+  "ux_issues": [
+    "Pushback reply still very long (4.5k chars) when user asked for specificity \u2014 should be denser not longer",
+    "Vague turn expensive (12k tok) \u2014 transit tool payload + long prose",
+    "User had to push back for specificity (generic-first pattern) \u2014 product should lead with chart-specific line"
+  ],
+  "product_actions": [
+    "Lead with one concrete natal+transit fact before atmospheric prose",
+    "When user challenges genericity, answer shorter with a table of 2\u20133 hard facts"
+  ]
+}

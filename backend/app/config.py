@@ -22,7 +22,9 @@ class Settings(BaseSettings):
     # ── Server ───────────────────────────────────────────────────
     HOST: str = "0.0.0.0"
     PORT: int = 8000
-    CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:5173", "http://localhost:5174", "http://localhost:3000",
+    ]
 
     # ── SQLite ──────────────────────────────────────────────────
     SQLITE_PATH: str = "data/astrology.db"
@@ -42,6 +44,15 @@ class Settings(BaseSettings):
     JWT_ANONYMOUS_EXPIRY_HOURS: int = 24
     JWT_AUTHENTICATED_EXPIRY_HOURS: int = 168  # 7 days
 
+    # ── Dev Auth ─────────────────────────────────────────────────
+    AUTH_DEV_MODE_ENABLED: bool = True
+    AUTH_DEV_USER_ID: str = "00000000-0000-4000-8000-000000000001"
+    AUTH_DEV_DISPLAY_NAME: str = "Dev User"
+
+    # ── Google Auth ──────────────────────────────────────────────
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+
     # ── Rate Limiting ────────────────────────────────────────────
     RATE_LIMIT_SSE_CONNECTS: int = 60
     RATE_LIMIT_CHART_CALCS: int = 20
@@ -49,6 +60,11 @@ class Settings(BaseSettings):
 
     # ── LLM / OpenCode Go API ────────────────────────────────────
     OPENCODE_API_KEY: str = ""
+    # Base URL without trailing path segment (client appends /chat/completions)
+    OPENCODE_API_BASE: str = "https://opencode.ai/zen/go/v1"
+    OPENCODE_MODEL: str = "deepseek-v4-flash"
+    # live = real OpenCode API; mock = deterministic scripted replies (offline only)
+    LLM_MODE: str = "live"
 
 
 settings = Settings()

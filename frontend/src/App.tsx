@@ -3,21 +3,19 @@
 import { useCallback, type FC } from 'react';
 import AppShell from './components/Layout/AppShell';
 import Workspace from './components/Layout/Workspace';
-import { AuthProvider, useAuthContext } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { ChartProvider, useChartContext } from './context/ChartContext';
 import { SSEProvider, useSSEContext } from './context/SSEContext';
+import { I18nProvider } from './i18n/I18nContext';
 import type { SSEEventPayload } from './types/events';
 
 /**
- * Inner app that uses all the contexts.
- * SSE events are dispatched to the ChartContext.
+ * Middle component that bridges ChartContext dispatch into SSEProvider's onEvent.
+ * Renders SSEProvider so AppInner can consume useSSEContext().
  */
-const AppInner: FC = () => {
-  const { state, dispatch } = useChartContext();
-  const { isConnected } = useSSEContext();
-  const { user } = useAuthContext();
+const AppWithSSE: FC = () => {
+  const { dispatch } = useChartContext();
 
-  // Global SSE event handler dispatches to chart context
   const handleSSEEvent = useCallback(
     (event: SSEEventPayload) => {
       switch (event.type) {
@@ -48,14 +46,9 @@ const AppInner: FC = () => {
           });
           break;
         case 'component.render':
-          // Handle component.render for specific component types
           if (event.data.component === 'LifePhaseTimeline') {
-            // TODO: wire life phase data when available
             console.log('LifePhaseTimeline render requested', event.data.props);
           }
-          break;
-        case 'session.status':
-          console.log('SSE session status:', event.data.status);
           break;
         case 'error':
           dispatch({ type: 'SET_ERROR', payload: event.data.message });
@@ -69,24 +62,37 @@ const AppInner: FC = () => {
 
   return (
     <SSEProvider onEvent={handleSSEEvent}>
-      <AppShell>
-        <Workspace />
-      </AppShell>
+      <AppInner />
     </SSEProvider>
   );
 };
 
 /**
+ * Inner app that uses all contexts.
+ */
+const AppInner: FC = () => {
+  // Keep SSE context subscribed so the stream stays active under the shell.
+  useSSEContext();
+
+  return (
+    <AppShell>
+      <Workspace />
+    </AppShell>
+  );
+};
+
+/**
  * Root App with all context providers.
- * AuthProvider auto-login creates an anonymous session.
  */
 const App: FC = () => {
   return (
-    <AuthProvider autoLogin={true}>
-      <ChartProvider>
-        <AppInner />
-      </ChartProvider>
-    </AuthProvider>
+    <I18nProvider>
+      <AuthProvider autoLogin={true}>
+        <ChartProvider>
+          <AppWithSSE />
+        </ChartProvider>
+      </AuthProvider>
+    </I18nProvider>
   );
 };
 

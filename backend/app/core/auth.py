@@ -20,12 +20,14 @@ bearer_scheme = HTTPBearer(auto_error=False)
 # ── Token Types ─────────────────────────────────────────────────
 
 TokenType = Literal["anonymous", "authenticated"]
+AuthProvider = Literal["anonymous", "google", "dev"]
 
 AuthPayload = dict[str, Any]
 """Expected JWT claims:
 {
     "sub": str(uuid),       # user_id
     "type": "anonymous" | "authenticated",
+    "auth_provider": "anonymous" | "google" | "dev",
     "iat": int,
     "exp": int,
 }
@@ -38,6 +40,7 @@ def create_token(
     user_id: UUID,
     *,
     token_type: TokenType = "anonymous",
+    auth_provider: AuthProvider = "anonymous",
     expires_in_hours: int | None = None,
 ) -> str:
     """Create a signed JWT for the given user.
@@ -56,6 +59,7 @@ def create_token(
     payload: AuthPayload = {
         "sub": str(user_id),
         "type": token_type,
+        "auth_provider": auth_provider,
         "iat": int(now.timestamp()),
         "exp": int((now + timedelta(hours=expires_in_hours)).timestamp()),
     }
